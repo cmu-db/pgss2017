@@ -76,14 +76,15 @@ class CasesSpider(scrapy.Spider):
 	def parseResults(self, response):
 		caseLinks = response.css('table.results a::attr(href)').extract()
 		for href in caseLinks:
-			if 'inquiry-results' in href: pass
-			yield response.follow(
-				href,
-				headers = {
-					'Cookie': self.cookie
-				},
-				callback = self.parseCase
-			)
+			if href.startswith(BASE_URL + SEARCH_URL): continue
+			else:
+				yield response.follow(
+					href,
+					headers = {
+						'Cookie': self.cookie
+					},
+					callback = self.parseCase
+				)
 
 		if not response.meta.get('Sub_Page') and len(caseLinks) > 0:
 			pageLinks = set(response.css('span.pagelinks a::attr(href)').extract())
@@ -101,4 +102,4 @@ class CasesSpider(scrapy.Spider):
 
 	def parseCase(self, response):
 		with open('data.txt', 'a') as file:
-			file.write(response.url + '\n')
+			# parse fields)
