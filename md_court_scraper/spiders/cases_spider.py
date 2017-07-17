@@ -61,7 +61,7 @@ class CasesSpider(scrapy.Spider):
 									'company': company,
 									'countyName': '',
 									'courtSystem': court,
-									'filingDate': '',
+									'filingDate': str(date.month) + '/' + str(date.day) + '/' + str(date.year),
 									'filingEnd': '',
 									'filingStart': '',
 									'firstName': '',
@@ -102,4 +102,4 @@ class CasesSpider(scrapy.Spider):
 
 	def parseCase(self, response):
 		with open('data.txt', 'a') as file:
-			# parse fields)
+			file.write(response.url + '\n')
