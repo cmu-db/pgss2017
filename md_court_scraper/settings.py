@@ -14,6 +14,7 @@ BOT_NAME = 'md_court_scraper'
 SPIDER_MODULES = ['md_court_scraper.spiders']
 NEWSPIDER_MODULE = 'md_court_scraper.spiders'
 
+LOG_LEVEL = 'INFO'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'md_court_scraper (+http://www.yourdomain.com)'
