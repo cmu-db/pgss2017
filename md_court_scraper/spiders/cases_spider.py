@@ -148,7 +148,8 @@ class CasesSpider(scrapy.Spider):
 	def saveCase(self, response):
 		case_id = extractCaseId(response.url)
 		try:
-			self.cur.execute('INSERT INTO rawcases (case_id, html) VALUES (%s, %s)', (case_id, response.body))
+			self.cur.execute('INSERT INTO rawcases (case_id, html) VALUES (%s, %s)', (case_id, response.text))
+			self.conn.commit()
 			self.logger.info('Saved case #%s', case_id)
 		except:
 			self.logger.error('Failed to insert row for %s', case_id)
