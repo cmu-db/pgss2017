@@ -6,10 +6,10 @@ CREATE TABLE rawcases(
 
 -- Actual tables after parsing
 CREATE TABLE cases(
-	case_id VARCHAR(24) PRIMARY KEY NOT NULL,
+	id VARCHAR(24) PRIMARY KEY NOT NULL,
 	title VARCHAR(128) NOT NULL,
 	court_system VARCHAR NOT NULL,
-	case_type VARCHAR NOT NULL,
+	type VARCHAR NOT NULL,
 	filing_date DATE NOT NULL,
 	status VARCHAR(14) NOT NULL,
 	disposition VARCHAR,

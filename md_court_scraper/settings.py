@@ -16,6 +16,8 @@ NEWSPIDER_MODULE = 'md_court_scraper.spiders'
 
 LOG_LEVEL = 'INFO'
 
+CONCURRENT_REQUESTS_PER_IP = 8
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'md_court_scraper (+http://www.yourdomain.com)'
 
@@ -72,7 +74,7 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
-#AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_ENABLED = False
 # The initial download delay
 #AUTOTHROTTLE_START_DELAY = 5
 # The maximum download delay to be set in case of high latencies
