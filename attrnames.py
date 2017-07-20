@@ -2,9 +2,9 @@ ATTRIBUTE_MAP = {
     'Case Number': 'case_id',
     'Case Type': 'type',
     'Case Disposition': 'disposition',
-    'Connection': 'party_type',
+    'Connection': 'type',
+    'Party Type': 'type'
     'Business or Organization Name': 'bus_org_name',
-    'Agency Name': 'agency_name',
     'Zip Code': 'zip',
     'Event Type': 'type',
     'Event Date': 'date',
@@ -12,7 +12,8 @@ ATTRIBUTE_MAP = {
     'Probable Cause Indicator': 'probable_cause',
     'Contributed to Accident': 'accident_contribution',
     'Personal Injury': 'injuries',
-    'Life/Death': 'extreme_punishment',
+    'Charge Class': 'class',
+    'Life/Death': 'jail_extreme_punishment',
     'Suspended Term': 'jail_suspended_term',
     'UnSuspended Term': 'jail_unsuspended_term',
     'Probation': 'probation_term',
@@ -22,10 +23,12 @@ ATTRIBUTE_MAP = {
     'Hours': 'cws_hours',
     'Complete By': 'cws_deadline',
     'Report To': 'cws_location',
-    'Report Date': 'cws_date'
-    'Document Name': 'name'
+    'Report Date': 'cws_date',
+    'Document Name': 'name',
+    'File Date': 'filing_date'
     'Entered Date': 'date',
     'Ordered Date': 'date',
+    'Judgement Interest': 'interest',
     'PreJudgement Interest': 'interest',
     'Amount': 'amt',
     'Amount of Judgement': 'amt',
