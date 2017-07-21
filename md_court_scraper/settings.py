@@ -16,7 +16,9 @@ NEWSPIDER_MODULE = 'md_court_scraper.spiders'
 
 LOG_LEVEL = 'INFO'
 
-CONCURRENT_REQUESTS_PER_IP = 8
+CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS_PER_DOMAIN = 32
+CONCURRENT_REQUESTS_PER_IP = 32
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'md_court_scraper (+http://www.yourdomain.com)'

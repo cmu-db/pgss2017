@@ -119,7 +119,12 @@ class CasesSpider(scrapy.Spider):
 				self.cur.execute('SELECT case_id FROM rawcases WHERE case_id = %s', (case_id,))
 			except:
 				self.logger.error('Failed to perform case_id lookup in rawcases')
-			if self.cur.fetchone() is None:
+			result = None
+			try:
+				result = self.cur.fetchone()
+			except:
+				self.logger.error('Failed to get case_id lookup result')
+			if result is None:
 				# If not GET the inquiry-details page
 				yield response.follow(
 					href,
@@ -128,6 +133,8 @@ class CasesSpider(scrapy.Spider):
 					},
 					callback = self.saveCase
 				)
+			else:
+				self.logger.info('Skipped %s (%s remaining)', case_id, len(self.crawler.engine.slot.scheduler))
 
 		# Generate requests for additional results pages from the original one
 		if not response.meta.get('Sub_Page') and len(caseLinks) > 0:
@@ -150,6 +157,6 @@ class CasesSpider(scrapy.Spider):
 		try:
 			self.cur.execute('INSERT INTO rawcases (case_id, html) VALUES (%s, %s)', (case_id, response.text))
 			self.conn.commit()
-			self.logger.info('Saved case #%s', case_id)
+			self.logger.info('Saved %s (%s remaining)', case_id, len(self.crawler.engine.slot.scheduler))
 		except:
 			self.logger.error('Failed to insert row for %s', case_id)
