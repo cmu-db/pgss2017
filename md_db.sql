@@ -41,9 +41,16 @@ CREATE TABLE parties(
 	zip VARCHAR(5)
 );
 
+CREATE TYPE attorney_type AS ENUM(
+	'Defendant/Respondent',
+	'Plaintiff/Petitioner',
+	'Related Person'
+);
+
 CREATE TABLE attorneys(
-	party_id INT REFERENCES parties NOT NULL,
-	name VARCHAR,
+	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	name VARCHAR NOT NULL,
+	type attorney_type NOT NULL,
 	appearance_date DATE,
 	removal_date DATE,
 	practice_name VARCHAR,

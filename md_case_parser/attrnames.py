@@ -3,7 +3,7 @@ ATTRIBUTE_MAP = {
     'Case Type': 'type',
     'Case Disposition': 'disposition',
     'Connection': 'type',
-    'Party Type': 'type'
+    'Party Type': 'type',
     'Business or Organization Name': 'bus_org_name',
     'Zip Code': 'zip',
     'Event Type': 'type',
@@ -25,7 +25,7 @@ ATTRIBUTE_MAP = {
     'Report To': 'cws_location',
     'Report Date': 'cws_date',
     'Document Name': 'name',
-    'File Date': 'filing_date'
+    'File Date': 'filing_date',
     'Entered Date': 'date',
     'Ordered Date': 'date',
     'Judgement Interest': 'interest',
@@ -39,3 +39,19 @@ def getAttributeName(label):
     attr = ATTRIBUTE_MAP.get(label)
     if not attr: attr = label.lower().replace(' ', '_')
     return attr
+
+HEADER_MAP = {
+    'Case Information': 'cases',
+    'Plaintiff/Petitioner Information': 'parties',
+    'Attorney(s) for the Plaintiff/Petitioner': 'attorneys',
+    'Defendant/Respondent Information': 'parties',
+    'Attorney(s) for the Defendant/Respondent': 'attorneys',
+    'Court Scheduling Information': 'events',
+    'ORIGINAL JUDGMENT': 'judgements',
+    'Related Persons Information': 'parties',
+    'Attorney(s) for the Related Person': 'attorneys',
+    'Document Tracking': 'documents'
+}
+
+def getSectionName(title):
+    return HEADER_MAP.get(title)
