@@ -13,7 +13,10 @@ def parseCase(html):
 	# Get KVPs, headers, and separators
 	rows = soup.find_all(['span', 'h5', 'h6', 'i', 'hr'])
 	# Iterate thru page rows
-	for row in rows:
+	i = 0
+	while i < len(rows):
+		row = rows[i]
+
 		# Save class list
 		classes = row.attrs.get('class', [])
 
@@ -21,6 +24,28 @@ def parseCase(html):
 			# Field names
 			if 'FirstColumnPrompt' in classes or 'Prompt' in classes:
 				headerval = row.get_text().strip()
+
+				# Parse newer event table format
+				if row.parent.name == 'th' and headerval == 'Event Type':
+					# Get number of table columns
+					headerVals = []
+					for j in range(i, len(rows)):
+						if rows[j].parent.name != 'th':
+							break
+						else:
+							headerVals.append(rows[j].get_text().strip())
+					# Get row values
+					rowVals = []
+					for j in range(i+len(headerVals), len(rows)):
+						if not 'Value' in rows[j].attrs.get('class', []):
+							i = j # Skip to the next section after this
+							break
+						else:
+							rowVals.append(rows[j].get_text().strip())
+					# Split and append events
+					for k in range(0, len(rowVals), len(headerVals)):
+						eventData = {x[0]: x[1] for x in zip(headerVals, rowVals[k:k+len(headerVals)])}
+						output.append(eventData)
 			# Values
 			elif 'Value' in classes:
 				dataval = row.get_text().strip()
@@ -39,6 +64,9 @@ def parseCase(html):
 							header = row.get_text().strip()
 							if header:
 								output.append(header)
+
+		# Increment index
+		i += 1
 
 	# Append any remaining KVPs
 	if data:
@@ -93,6 +121,10 @@ def formatAttrs(data, section):
 		# Discard party information in the attorney sections
 		else:
 			return None
+
+	# Assign officers a type to indicate that they're officers
+	if 'Defendant' in section or 'Plaintiff' in section or 'Officer' in section:
+		d['type'] = section.replace(' Information', '')
 
 	return d
 

@@ -5,6 +5,7 @@ ATTRIBUTE_MAP = {
     'Connection': 'type',
     'Party Type': 'type',
     'Business or Organization Name': 'bus_org_name',
+    'AgencyName': 'agency_name',
     'Zip Code': 'zip',
     'Event Type': 'type',
     'Event Date': 'date',
@@ -43,14 +44,22 @@ def getAttributeName(label):
 HEADER_MAP = {
     'Case Information': 'cases',
     'Plaintiff/Petitioner Information': 'parties',
+    'Plaintiff': 'parties',
+    'Officer - Arresting/Complainant': 'parties',
     'Attorney(s) for the Plaintiff/Petitioner': 'attorneys',
+    'Attorney(s) for the Plaintiff': 'attorneys',
     'Defendant/Respondent Information': 'parties',
+    'Defendant': 'parties',
     'Attorney(s) for the Defendant/Respondent': 'attorneys',
+    'Attorney(s) for the Defendant': 'attorneys',
     'Court Scheduling Information': 'events',
     'ORIGINAL JUDGMENT': 'judgements',
     'Related Persons Information': 'parties',
     'Attorney(s) for the Related Person': 'attorneys',
-    'Document Tracking': 'documents'
+    'Charge and Disposition Information': 'charges',
+    'Disposition': 'charges',
+    'Document Tracking': 'documents',
+    'Document Information': 'documents'
 }
 
 def getSectionName(title):
