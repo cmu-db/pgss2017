@@ -7,7 +7,7 @@ CREATE TABLE rawcases(
 -- Actual tables after parsing
 CREATE TABLE cases(
 	case_id VARCHAR(24) PRIMARY KEY NOT NULL,
-	timestamp DATE DEFAULT CURRENT_TIMESTAMP,
+	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	title VARCHAR(128) NOT NULL,
 	court_system VARCHAR NOT NULL,
 	type VARCHAR NOT NULL,
