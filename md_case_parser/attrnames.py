@@ -1,10 +1,15 @@
 ATTRIBUTE_MAP = {
     'Case Number': 'case_id',
     'Case Type': 'type',
+    'Claim Type': 'type',
     'Case Disposition': 'disposition',
+    'Complaint Status': 'status',
+    'Vs': 'against',
     'Connection': 'type',
+    'Connection to Complaint': 'type',
     'Party Type': 'type',
     'Business or Organization Name': 'bus_org_name',
+    'Attorney\'s Firm': 'practice_name',
     'AgencyName': 'agency_name',
     'Zip Code': 'zip',
     'Event Type': 'type',
@@ -31,6 +36,7 @@ ATTRIBUTE_MAP = {
     'Ordered Date': 'date',
     'Judgement Interest': 'interest',
     'PreJudgement Interest': 'interest',
+    'Is Awarded To The': 'in_favor_of',
     'Amount': 'amt',
     'Amount of Judgement': 'amt',
 }
@@ -53,13 +59,17 @@ HEADER_MAP = {
     'Attorney(s) for the Defendant/Respondent': 'attorneys',
     'Attorney(s) for the Defendant': 'attorneys',
     'Court Scheduling Information': 'events',
+    'Case History Information': 'events',
     'ORIGINAL JUDGMENT': 'judgements',
+    'Judgement Information': 'judgements',
+    'Related Person Information': 'parties',
     'Related Persons Information': 'parties',
     'Attorney(s) for the Related Person': 'attorneys',
     'Charge and Disposition Information': 'charges',
     'Disposition': 'charges',
     'Document Tracking': 'documents',
-    'Document Information': 'documents'
+    'Document Information': 'documents',
+    'Complaint Information': 'complaints'
 }
 
 def getSectionName(title):

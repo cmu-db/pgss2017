@@ -49,7 +49,7 @@ def parseCase(html):
 			# Values
 			elif 'Value' in classes:
 				dataval = row.get_text().strip()
-				if headerval and dataval != 'MONEY JUDGMENT':
+				if headerval and dataval != 'MONEY JUDGMENT': # The 'money judgement' header is useless
 					data[headerval] = dataval
 			# Headers and separators
 			else:
@@ -103,6 +103,25 @@ def formatOutput(data):
 					output[header] += entries
 				else:
 					output[header] = entries
+
+	# Move attorneys listed under parties to attorneys
+	parties = output.get('parties', [])
+	j = 0
+	while j < len(parties):
+		partyType = parties[j].get('type')
+		# Check if party type is an attorney
+		if partyType and partyType.lower().startswith('attorney for '):
+			# Remove the party from the parties list
+			party = parties.pop(j)
+			j -= 1
+			# Set the type to the appropriate attorney type
+			party['type'] = partyType[13:]
+			# Create attorneys key if necessary
+			if not output.get('attorneys'):
+				output['attorneys'] = []
+			# Append this attorney
+			output['attorneys'].append(party)
+		j += 1
 
 	return output
 
