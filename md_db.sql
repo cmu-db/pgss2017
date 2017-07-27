@@ -6,7 +6,7 @@ CREATE TABLE rawcases(
 
 -- Actual tables after parsing
 CREATE TABLE cases(
-	id VARCHAR(24) PRIMARY KEY NOT NULL,
+	case_id VARCHAR(24) PRIMARY KEY NOT NULL,
 	title VARCHAR(128) NOT NULL,
 	court_system VARCHAR NOT NULL,
 	type VARCHAR NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE charges(
 	seatbelts_used BOOLEAN,
 	mandatory_court_appearance BOOLEAN,
 	vehicle_tag VARCHAR,
-	vehicle_state VARCHAR(2),
+	state VARCHAR(2),
 	plea VARCHAR,
 	plea_date DATE,
 	disposition VARCHAR,
