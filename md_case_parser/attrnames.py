@@ -1,8 +1,11 @@
 ATTRIBUTE_MAP = {
     'Case Number': 'case_id',
+    'Citation Number': 'case_id',
     'Case Type': 'type',
+    'Case Title': 'title',
     'Claim Type': 'type',
     'Case Disposition': 'disposition',
+    'Case Status': 'status',
     'Complaint Status': 'status',
     'Vs': 'against',
     'Connection': 'type',
@@ -15,8 +18,10 @@ ATTRIBUTE_MAP = {
     'Event Type': 'type',
     'Event Date': 'date',
     'Event Time': 'time',
+    'Vehicle State': 'state',
     'Probable Cause Indicator': 'probable_cause',
     'Contributed to Accident': 'accident_contribution',
+    'Convicted Speed': 'recorded_speed',
     'Personal Injury': 'injuries',
     'Charge Class': 'class',
     'Life/Death': 'jail_extreme_punishment',
@@ -24,7 +29,7 @@ ATTRIBUTE_MAP = {
     'UnSuspended Term': 'jail_unsuspended_term',
     'Probation': 'probation_term',
     'Supervised': 'probation_supervised_term',
-    'UnSupervised Term': 'probation_unsupervised_term',
+    'UnSupervised': 'probation_unsupervised_term',
     'First Pmt Due': 'fine_first_pmt_due',
     'Hours': 'cws_hours',
     'Complete By': 'cws_deadline',
@@ -42,7 +47,6 @@ ATTRIBUTE_MAP = {
 }
 
 def getAttributeName(label):
-    if label.endswith(':'): label = label[:-1]
     attr = ATTRIBUTE_MAP.get(label)
     if not attr: attr = label.lower().replace(' ', '_')
     return attr
@@ -55,6 +59,7 @@ HEADER_MAP = {
     'Attorney(s) for the Plaintiff/Petitioner': 'attorneys',
     'Attorney(s) for the Plaintiff': 'attorneys',
     'Defendant/Respondent Information': 'parties',
+    'Defendant Information': 'parties',
     'Defendant': 'parties',
     'Attorney(s) for the Defendant/Respondent': 'attorneys',
     'Attorney(s) for the Defendant': 'attorneys',
