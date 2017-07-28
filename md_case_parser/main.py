@@ -32,7 +32,7 @@ def main():
         insertCase(open('test.html', 'r').read())
     else:
         # Get raw case HTML where we haven't already parsed it
-        cur.execute('SELECT * FROM rawcases WHERE case_id NOT IN (SELECT case_id FROM cases)')
+        cur.execute('SELECT * FROM rawcases WHERE case_id NOT IN (SELECT case_id FROM cases) ORDER BY case_id')
 
         # Iterate thru cases
         for case in cur:
@@ -65,11 +65,8 @@ def insertData(case_id, data, table):
         dataTuple = tuple(getFieldValue(field) for field in dataFields)
 
         # Execute insertion
-        try:
-            cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES (' + '%s, ' * (len(dataFields) - 1) + '%s)', dataTuple)
-            print('Saved %s row for %s' % (table, case_id))
-        except:
-            print('ERROR: Failed to insert %s row for %s' % (table, case_id))
+        cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES (' + '%s, ' * (len(dataFields) - 1) + '%s)', dataTuple)
+        print('Saved %s row for %s' % (table, case_id))
 
     # Commit changes to DB
     conn.commit()
