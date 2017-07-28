@@ -24,9 +24,22 @@ def parseCase(html):
 			# Field names
 			if 'FirstColumnPrompt' in classes or 'Prompt' in classes:
 				headerval = row.get_text().strip()
+				if headerval.endswith(':'): headerval = headerval[:-1].strip()
 
+				# Parse jail and probation terms
+				if headerval in {'Jail Term', 'Suspended Term', 'UnSuspended Term', 'Probation', 'Supervised', 'UnSupervised'}:
+					# Generate interval string from yrs+mos+days+hrs fields
+					yrs = rows[i+2].get_text().strip() or '0'
+					mos = rows[i+4].get_text().strip() or '0'
+					days = rows[i+6].get_text().strip() or '0'
+					hrs = rows[i+8].get_text().strip() or '0'
+					interval = yrs + '-' + mos + ' ' + days + ' ' + hrs + ':00:00'
+					# Append as KVP
+					data[headerval] = interval
+					# Skip to the next section after this
+					i += 8
 				# Parse newer event table format
-				if row.parent.name == 'th' and headerval == 'Event Type':
+				elif row.parent.name == 'th' and headerval == 'Event Type':
 					# Get number of table columns
 					headerVals = []
 					for j in range(i, len(rows)):
@@ -36,15 +49,15 @@ def parseCase(html):
 							headerVals.append(rows[j].get_text().strip())
 					# Get row values
 					rowVals = []
-					for j in range(i+len(headerVals), len(rows)):
-						if not 'Value' in rows[j].attrs.get('class', []):
-							i = j # Skip to the next section after this
+					for k in range(i+len(headerVals), len(rows)):
+						if not 'Value' in rows[k].attrs.get('class', []):
+							i = k # Skip to the next section after this
 							break
 						else:
-							rowVals.append(rows[j].get_text().strip())
+							rowVals.append(rows[k].get_text().strip())
 					# Split and append events
-					for k in range(0, len(rowVals), len(headerVals)):
-						eventData = {x[0]: x[1] for x in zip(headerVals, rowVals[k:k+len(headerVals)])}
+					for l in range(0, len(rowVals), len(headerVals)):
+						eventData = {x[0]: x[1] for x in zip(headerVals, rowVals[l:l+len(headerVals)])}
 						output.append(eventData)
 			# Values
 			elif 'Value' in classes:
@@ -55,15 +68,17 @@ def parseCase(html):
 			else:
 				if 'InfoChargeStatement' not in classes:
 					if row.name in {'hr', 'h5', 'h6', 'i'}:
-						# Append the KVPs and reset the temporary dict
-						if data:
-							output.append(data)
-							data = {}
-						# Add the header to the data list
-						if row.name != 'hr':
-							header = row.get_text().strip()
-							if header:
-								output.append(header)
+						header = row.get_text().strip()
+						# Skip over the charge subheadings
+						if not (header in {'Disposition', 'Jail', 'Probation', 'Fine', 'Community Work Service'} and row.name == 'i' and row.parent.name == 'left'):
+							# Append the KVPs and reset the temporary dict
+							if data:
+								output.append(data)
+								data = {}
+							# Add the header to the data list
+							if row.name != 'hr':
+								if header:
+									output.append(header)
 
 		# Increment index
 		i += 1
@@ -129,9 +144,15 @@ def formatAttrs(data, section):
 	# Formatted output dict
 	d = {}
 
-	# Get proper field names
+	# Iterate thru fields in input dict
 	for field in data:
-		d[getAttributeName(field)] = data[field]
+		# Get proper field names
+		formattedName = getAttributeName(field)
+		d[formattedName] = data[field]
+		# Format heights
+		if formattedName == 'height' and ('\'' in data[field] or '"' in data[field]):
+			vals = data[field].replace('"', '\'').split('\'')
+			d[formattedName] = str(int(vals[0]) * 12 + int(vals[1]))
 
 	# Assign attorneys a type based on what section they're in
 	if section.startswith('Attorney(s) for the '):
@@ -140,9 +161,8 @@ def formatAttrs(data, section):
 		# Discard party information in the attorney sections
 		else:
 			return None
-
 	# Assign officers a type to indicate that they're officers
-	if 'Defendant' in section or 'Plaintiff' in section or 'Officer' in section:
+	elif 'Defendant' in section or 'Plaintiff' in section or 'Officer' in section:
 		d['type'] = section.replace(' Information', '')
 
 	return d
