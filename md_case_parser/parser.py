@@ -153,6 +153,9 @@ def formatAttrs(data, section):
 		if formattedName == 'height' and ('\'' in data[field] or '"' in data[field]):
 			vals = data[field].replace('"', '\'').split('\'')
 			d[formattedName] = str(int(vals[0]) * 12 + int(vals[1]))
+		# Format sex
+		elif formattedName == 'sex':
+			d[formattedName] = data[field].upper()[0]
 
 	# Assign attorneys a type based on what section they're in
 	if section.startswith('Attorney(s) for the '):

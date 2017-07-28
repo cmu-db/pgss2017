@@ -1,18 +1,18 @@
 -- Temporary table to store HTML for case detail pages
 CREATE TABLE rawcases(
-	case_id VARCHAR(24) PRIMARY KEY NOT NULL,
+	case_id VARCHAR PRIMARY KEY NOT NULL,
 	html TEXT NOT NULL
 );
 
 -- Actual tables after parsing
 CREATE TABLE cases(
-	case_id VARCHAR(24) PRIMARY KEY NOT NULL,
+	case_id VARCHAR PRIMARY KEY NOT NULL,
 	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	title VARCHAR(128) NOT NULL,
+	title VARCHAR NOT NULL,
 	court_system VARCHAR NOT NULL,
 	type VARCHAR NOT NULL,
 	filing_date DATE NOT NULL,
-	status VARCHAR(14) NOT NULL,
+	status VARCHAR NOT NULL,
 	disposition VARCHAR,
 	disposition_date DATE,
 	violation_county VARCHAR,
@@ -25,7 +25,7 @@ CREATE TYPE sex AS ENUM(
 );
 
 CREATE TABLE parties(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	id BIGSERIAL PRIMARY KEY,
 	name VARCHAR,
 	type VARCHAR,
@@ -38,12 +38,12 @@ CREATE TABLE parties(
 	dob DATE,
 	address VARCHAR,
 	city VARCHAR,
-	state VARCHAR(2),
-	zip VARCHAR(5)
+	state VARCHAR,
+	zip VARCHAR
 );
 
 CREATE TABLE attorneys(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	name VARCHAR NOT NULL,
 	type VARCHAR,
 	appearance_date DATE,
@@ -51,31 +51,31 @@ CREATE TABLE attorneys(
 	practice_name VARCHAR,
 	address VARCHAR,
 	city VARCHAR,
-	state VARCHAR(2),
-	zip VARCHAR(5)
+	state VARCHAR,
+	zip VARCHAR
 );
 
 CREATE TABLE events(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	type VARCHAR,
 	date DATE,
-	time VARCHAR(8),
+	time TIME,
 	result VARCHAR,
 	result_date DATE
 );
 
 CREATE TABLE charges(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	statute_code VARCHAR NOT NULL,
 	charge_description VARCHAR NOT NULL,
 	offense_date_from DATE,
 	offense_date_to DATE,
-	class VARCHAR(1),
+	class VARCHAR,
 	amended_date VARCHAR,
 	cjis_code VARCHAR,
 	probable_cause BOOLEAN,
 	victim_age INTEGER,
-	speed_limit INTEGER
+	speed_limit INTEGER,
 	recorded_speed INTEGER,
 	location_stopped VARCHAR,
 	accident_contribution BOOLEAN,
@@ -84,7 +84,7 @@ CREATE TABLE charges(
 	seatbelts_used BOOLEAN,
 	mandatory_court_appearance BOOLEAN,
 	vehicle_tag VARCHAR,
-	state VARCHAR(2),
+	state VARCHAR,
 	plea VARCHAR,
 	plea_date DATE,
 	disposition VARCHAR,
@@ -108,13 +108,13 @@ CREATE TABLE charges(
 );
 
 CREATE TABLE documents(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	name VARCHAR NOT NULL,
 	filing_date DATE
 );
 
 CREATE TABLE judgements(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	against VARCHAR,
 	in_favor_of VARCHAR,
 	type VARCHAR,
@@ -124,7 +124,7 @@ CREATE TABLE judgements(
 );
 
 CREATE TABLE complaints(
-	case_id VARCHAR(24) REFERENCES cases NOT NULL,
+	case_id VARCHAR REFERENCES cases NOT NULL,
 	type VARCHAR NOT NULL,
 	against VARCHAR,
 	status VARCHAR NOT NULL,
