@@ -19,11 +19,6 @@ CREATE TABLE cases(
 	violation_date DATE
 );
 
-CREATE TYPE sex AS ENUM(
-	'M',
-	'F'
-);
-
 CREATE TABLE parties(
 	case_id VARCHAR REFERENCES cases NOT NULL,
 	id BIGSERIAL PRIMARY KEY,
@@ -32,7 +27,7 @@ CREATE TABLE parties(
 	bus_org_name VARCHAR,
 	agency_name VARCHAR,
 	race VARCHAR,
-	sex sex,
+	sex VARCHAR,
 	height INT,
 	weight INT,
 	dob DATE,
