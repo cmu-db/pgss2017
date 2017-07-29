@@ -112,6 +112,11 @@ class CasesSpider(scrapy.Spider):
 
 	# Extract case detail links from results pages
 	def parseResults(self, response):
+		# Redo request if response was not OK
+		return
+		if response.status != 200:
+			yield response.request.callback
+			return
 		# Look for <a> in results table
 		caseLinks = response.css('table.results a::attr(href)').extract()
 		for href in caseLinks:
@@ -155,6 +160,11 @@ class CasesSpider(scrapy.Spider):
 
 	# Insert case details page HTML into DB
 	def saveCase(self, response):
+		# Redo request if response was not OK
+		if response.status != 200:
+			yield response.request
+			return
+		# Get case ID and execute query
 		case_id = extractCaseId(response.url)
 		try:
 			self.cur.execute('INSERT INTO rawcases (case_id, html) VALUES (%s, %s)', (case_id, response.text))
