@@ -120,14 +120,13 @@ class CasesSpider(scrapy.Spider):
 			# Make sure the case hasn't already been saved
 			case_id = extractCaseId(href)
 			try:
-				self.cur.execute('SELECT case_id FROM rawcases WHERE case_id = %s', (case_id,))
+				self.cur.execute('SELECT EXISTS(SELECT 1 FROM rawcases WHERE case_id = %s)', (case_id,))
 			except:
 				self.logger.error('Failed to perform case_id lookup in rawcases')
 				self.connectToDatabase()
 				self.parseResults(self, response)
 				return
-			result = self.cur.fetchone() or None
-			if result is None:
+			if not self.cur.fetchone()[0]:
 				# If not GET the inquiry-details page
 				yield response.follow(
 					href,
