@@ -45,17 +45,21 @@ class CasesSpider(scrapy.Spider):
 
 	# Connect to PostgreSQL and start crawler on disclaimer page
 	def start_requests(self):
+		self.connectToDatabase(self)
+
+		return [ scrapy.Request(
+			BASE_URL + DISCLAIMER_URL,
+			callback = self.acceptDisclaimer
+		)]
+
+	# Connect to PostgreSQL
+	def connectToDatabase(self, *args):
 		try:
 			self.conn = psycopg2.connect(host=self.dbhost, database=self.db, user=self.dbuser, password=self.dbpassword)
 			self.logger.info('Connected to PostgreSQL')
 		except:
 			self.logger.critical('Unable to connect to PostgreSQL')
 		self.cur = self.conn.cursor()
-
-		return [ scrapy.Request(
-			BASE_URL + DISCLAIMER_URL,
-			callback = self.acceptDisclaimer
-		)]
 
 	# Spoof form submission
 	def acceptDisclaimer(self, response):
@@ -119,11 +123,10 @@ class CasesSpider(scrapy.Spider):
 				self.cur.execute('SELECT case_id FROM rawcases WHERE case_id = %s', (case_id,))
 			except:
 				self.logger.error('Failed to perform case_id lookup in rawcases')
-			result = None
-			try:
-				result = self.cur.fetchone()
-			except:
-				self.logger.error('Failed to get case_id lookup result')
+				self.connectToDatabase()
+				self.parseResults(self, response)
+				return
+			result = self.cur.fetchone() or None
 			if result is None:
 				# If not GET the inquiry-details page
 				yield response.follow(
@@ -160,3 +163,5 @@ class CasesSpider(scrapy.Spider):
 			self.logger.info('Saved %s (%s remaining)', case_id, len(self.crawler.engine.slot.scheduler))
 		except:
 			self.logger.error('Failed to insert row for %s', case_id)
+			self.connectToDatabase()
+			self.saveCase(self, response)
