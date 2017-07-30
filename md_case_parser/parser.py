@@ -23,16 +23,32 @@ def parseCase(html):
 		if 'AltBodyWindowDcCivil' not in classes:
 			# Field names
 			if 'FirstColumnPrompt' in classes or 'Prompt' in classes:
-				headerval = row.get_text().strip()
-				if headerval.endswith(':'): headerval = headerval[:-1].strip()
+				headerval = row.get_text()
 
+				# Remove unnecessary end chars
+				if headerval.endswith(':'): headerval = headerval[:-1]
+				if headerval.endswith('?'): headerval = headerval[:-1]
+
+				headerval = stripWhitespace(headerval)
+
+				# Parse newer charge statue code format
+				if headerval == 'Article' and stripWhitespace(rows[i+2].get_text()) == 'Sec:':
+					# Build statute code from individual fields
+					statuteCode = []
+					for j in range(i+1, i+10, 2):
+						if 'Value' in rows[j].attrs.get('class', []):
+							statuteCode.append(stripWhitespace(rows[j].get_text()))
+					# Append as KVP
+					data['Statute Code'] = '.'.join(filter(None, statuteCode))
+					# Skip to the next section after this
+					i += 10
 				# Parse jail and probation terms
-				if headerval in {'Jail Term', 'Suspended Term', 'UnSuspended Term', 'Probation', 'Supervised', 'UnSupervised'}:
+				elif headerval in {'Jail Term', 'Suspended Term', 'UnSuspended Term', 'Probation', 'Supervised', 'UnSupervised'}:
 					# Generate interval string from yrs+mos+days+hrs fields
-					yrs = rows[i+2].get_text().strip() or '0'
-					mos = rows[i+4].get_text().strip() or '0'
-					days = rows[i+6].get_text().strip() or '0'
-					hrs = rows[i+8].get_text().strip() or '0'
+					yrs = stripWhitespace(rows[i+2].get_text()) or '0'
+					mos = stripWhitespace(rows[i+4].get_text()) or '0'
+					days = stripWhitespace(rows[i+6].get_text()) or '0'
+					hrs = stripWhitespace(rows[i+8].get_text()) or '0'
 					interval = yrs + '-' + mos + ' ' + days + ' ' + hrs + ':00:00'
 					# Append as KVP
 					data[headerval] = interval
@@ -46,7 +62,7 @@ def parseCase(html):
 						if rows[j].parent.name != 'th':
 							break
 						else:
-							headerVals.append(rows[j].get_text().strip())
+							headerVals.append(stripWhitespace(rows[j].get_text()))
 					# Get row values
 					rowVals = []
 					for k in range(i+len(headerVals), len(rows)):
@@ -54,21 +70,21 @@ def parseCase(html):
 							i = k # Skip to the next section after this
 							break
 						else:
-							rowVals.append(rows[k].get_text().strip())
+							rowVals.append(stripWhitespace(rows[k].get_text()))
 					# Split and append events
 					for l in range(0, len(rowVals), len(headerVals)):
 						eventData = {x[0]: x[1] for x in zip(headerVals, rowVals[l:l+len(headerVals)])}
 						output.append(eventData)
 			# Values
 			elif 'Value' in classes:
-				dataval = row.get_text().strip()
+				dataval = stripWhitespace(row.get_text())
 				if headerval and dataval != 'MONEY JUDGMENT': # The 'money judgement' header is useless
 					data[headerval] = dataval
 			# Headers and separators
 			else:
 				if 'InfoChargeStatement' not in classes:
 					if row.name in {'hr', 'h5', 'h6', 'i'}:
-						header = row.get_text().strip()
+						header = stripWhitespace(row.get_text())
 						# Skip over the charge subheadings
 						if not (header in {'Disposition', 'Jail', 'Probation', 'Fine', 'Community Work Service'} and row.name == 'i' and row.parent.name == 'left'):
 							# Append the KVPs and reset the temporary dict
@@ -94,6 +110,10 @@ def formatOutput(data):
 	# Final output dict
 	output = {}
 
+	# Add case information header if necessary
+	if len(data) > 0 and not isinstance(data[0], str):
+		data.insert(0, 'Case Information')
+
 	# Iterate thru data list
 	for i in range(len(data)):
 		# Check if item is a section header
@@ -109,7 +129,7 @@ def formatOutput(data):
 					if isinstance(data[j], str):
 						break
 					# Get proper attribute names for fields
-					attrMap = formatAttrs(data[j], data[i])
+					attrMap = formatAttrs(data[j], data[i], header)
 					# Save this dict if it hasn't been nullified
 					if attrMap:
 						entries.append(attrMap)
@@ -140,7 +160,7 @@ def formatOutput(data):
 
 	return output
 
-def formatAttrs(data, section):
+def formatAttrs(data, section, header):
 	# Formatted output dict
 	d = {}
 
@@ -156,19 +176,33 @@ def formatAttrs(data, section):
 		# Format sex
 		elif formattedName == 'sex':
 			d[formattedName] = data[field].upper()[0]
+		# Format dates
+		elif ('date' in formattedName or formattedName == 'dob') and data[field]:
+			vals = data[field].split('/')
+			if len(vals) < 3:
+				d[formattedName] = vals[0] + '/01/' + vals[1]
+		# Format booleans
+		elif formattedName in {'probable_cause', 'accident_contribution', 'property_damage', 'seatbelts_used', 'mandatory_court_appearance'}:
+			d[formattedName] = data[field].lower() in {'y', 'yes'}
+		# Format traffic accident injuries
+		elif formattedName == 'injuries' and not data[field].isdigit():
+			d[formattedName] = 0
 
 	# Assign attorneys a type based on what section they're in
 	if section.startswith('Attorney(s) for the '):
-		if d.get('appearance_date'):
+		if d.get('appearance_date') or (d.get('name') and 'attorney' in d.get('name').lower()):
 			d['type'] = section[20:]
 		# Discard party information in the attorney sections
 		else:
 			return None
 	# Assign officers a type to indicate that they're officers
-	elif 'Defendant' in section or 'Plaintiff' in section or 'Officer' in section:
+	elif header == 'parties' and ('Surety' in section or 'Bond' in section or 'Defendant' in section or 'Plaintiff' in section or 'Officer' in section):
 		d['type'] = section.replace(' Information', '')
 
 	return d
+
+def stripWhitespace(s):
+	return ' '.join(s.split())
 
 # This is only for testing
 if __name__ == '__main__': print(parseCase(open('test.html', 'r').read()))

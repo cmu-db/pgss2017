@@ -8,11 +8,11 @@ CREATE TABLE rawcases(
 CREATE TABLE cases(
 	case_id VARCHAR PRIMARY KEY NOT NULL,
 	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	title VARCHAR NOT NULL,
-	court_system VARCHAR NOT NULL,
-	type VARCHAR NOT NULL,
-	filing_date DATE NOT NULL,
-	status VARCHAR NOT NULL,
+	title VARCHAR,
+	court_system VARCHAR,
+	type VARCHAR,
+	filing_date DATE,
+	status VARCHAR,
 	disposition VARCHAR,
 	disposition_date DATE,
 	violation_county VARCHAR,
@@ -39,7 +39,7 @@ CREATE TABLE parties(
 
 CREATE TABLE attorneys(
 	case_id VARCHAR REFERENCES cases NOT NULL,
-	name VARCHAR NOT NULL,
+	name VARCHAR,
 	type VARCHAR,
 	appearance_date DATE,
 	removal_date DATE,
@@ -61,8 +61,8 @@ CREATE TABLE events(
 
 CREATE TABLE charges(
 	case_id VARCHAR REFERENCES cases NOT NULL,
-	statute_code VARCHAR NOT NULL,
-	charge_description VARCHAR NOT NULL,
+	statute_code VARCHAR,
+	description VARCHAR,
 	offense_date_from DATE,
 	offense_date_to DATE,
 	class VARCHAR,
@@ -104,7 +104,7 @@ CREATE TABLE charges(
 
 CREATE TABLE documents(
 	case_id VARCHAR REFERENCES cases NOT NULL,
-	name VARCHAR NOT NULL,
+	name VARCHAR,
 	filing_date DATE
 );
 
@@ -120,9 +120,9 @@ CREATE TABLE judgements(
 
 CREATE TABLE complaints(
 	case_id VARCHAR REFERENCES cases NOT NULL,
-	type VARCHAR NOT NULL,
+	type VARCHAR,
 	against VARCHAR,
-	status VARCHAR NOT NULL,
+	status VARCHAR,
 	status_date DATE,
 	filing_date DATE,
 	amt MONEY
