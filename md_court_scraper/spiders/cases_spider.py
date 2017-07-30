@@ -111,7 +111,7 @@ class CasesSpider(scrapy.Spider):
 							)
 
 	# Extract case detail links from results pages
-	def parseResults(self, response):
+	def parseResults(self, response, *args):
 		# Redo request if response was not OK
 		return
 		if response.status != 200:
@@ -159,7 +159,7 @@ class CasesSpider(scrapy.Spider):
 				)
 
 	# Insert case details page HTML into DB
-	def saveCase(self, response):
+	def saveCase(self, response, *args):
 		# Redo request if response was not OK
 		if response.status != 200:
 			yield response.request
