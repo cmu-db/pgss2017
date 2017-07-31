@@ -22,22 +22,23 @@ def main():
     cur = conn.cursor()
 
     #select data from DB
-    with cur :
-        sql = '''SELECT cases.disposition, parties.race, parties.sex, parties.zip, charges.injuries, charges.property_damage FROM cases JOIN parties JOIN charges
-                 WHERE cases.dispostion IN {}
-                 ORDER BY cases.disposition'''.format(tuple(cases.dispostion))
-        cursor.execute(sql)
-        all = np.array(cursor.fetchall())
-        print(all)
-        arr = dict()
+    with cur:
+        cursor.execute('''SELECT cases.disposition, parties.race, parties.sex, parties.zip, charges.injuries, charges.property_damage
+                 FROM cases
+                 JOIN parties ON cases.id = parties.id
+                 JOIN charges ON cases.id = charges.id
+                 WHERE NULLIF(cases.disposition, '') IS NOT NULL''')
+        results = np.array(cursor.fetchall())
+        print(results)
+        d = dict()
         for i, cases.disposition in enumerate(cases.disposition):
-            arr[cases.disposition] = data[i]
-        return arr
-        print(arr)
+            d[cases.disposition] = results[i]
+        return d
+        print(d)
 
-        data = arr[:, 1:]
-        target = myconv(arr[1, :])
-        
+        data = d[:, 1:]
+        target = myconv(d[1, :])
+
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
     tree = DecisionTreeClassifier(max_depth=4,  random_state=0) # pre pruned tree limiting depth
