@@ -13,12 +13,13 @@ def main():
         print('Unable to connect to PostgreSQL')
     cur = conn.cursor()
 
-    getquery = '''SELECT *
-                  FROM cases, parties, attorneys, events, charges, documents, judgements, complaints
-                  WHERE case.id = case_id
-                  GROUP BY case_id''')
+    getquery = '''SELECT cases.disposition, parties.race, parties.sex, parties.zip, charges.injuries, charges.property_damage
+                  FROM cases
+                  JOIN parties ON cases.case_id = parties.case_id
+                  JOIN charges ON cases.case_id = charges.case_id
+                  WHERE NULLIF(cases.disposition, '') IS NOT NULL'''
 
-    dataoutput = "COPY ({0}) TO /md_learning/datafile.csv WITH CSV HEADER".format(getquery)
+    dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER".format(getquery)
 
     with open('datafile.csv', 'w') as f:
             cur.copy_expert(dataoutput, f)
