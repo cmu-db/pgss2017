@@ -16,27 +16,10 @@ def myconv(x):
         return float(a)
 
 def main():
-    global cur, conn
 
-    # Connect to DB
-    args = sys.argv[1:]
-    try:
-        conn = psycopg2.connect(host=args[0], database=args[1], user=args[2], password=args[3])
-    except:
-        print('Unable to connect to PostgreSQL')
-    cur = conn.cursor()
 
-    #select data from DB
-    with cur:
-        cur.execute('''SELECT cases.disposition, parties.race, parties.sex, parties.zip, charges.injuries, charges.property_damage
-                 FROM cases
-                 JOIN parties ON cases.case_id = parties.case_id
-                 JOIN charges ON cases.case_id = charges.case_id
-                 WHERE NULLIF(cases.disposition, '') IS NOT NULL''')
-        results = np.array(cur.fetchall())
-        print(results)
-        data = results[:, 1:]
-        target = myconv(results[1, :])
+    data = results[:, 1:]
+    target = myconv(results[1, :])
 
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
