@@ -1,5 +1,4 @@
 import psycopg2
-import courtdatafile.csv
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -17,9 +16,10 @@ def myconv(x):
 
 def main():
 
+    csv = np.genfromtxt('courtdatafile.csv', skip_header = 1, delimiter =',', converters={0:myconv})
 
-    data = results[:, 1:]
-    target = myconv(results[1, :])
+    data = csv[:, 1:]
+    target = csv[0:, 1]
 
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
@@ -28,7 +28,7 @@ def main():
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
     #fix line (csv flie?)
-    export_graphviz(tree,  out_file='dispositiontree.dot',  class_names=['Guilty',  'Not Guilty'],  feature_names=cancer.feature_names,  impurity=False,  filled=True)
+    export_graphviz(tree,  out_file='dispositiontree.dot',  class_names=['Guilty',  'Not Guilty'],  feature_names=csv.feature_names,  impurity=False,  filled=True)
 
 
 if __name__ == '__main__': main()
