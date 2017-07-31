@@ -113,7 +113,6 @@ class CasesSpider(scrapy.Spider):
 	# Extract case detail links from results pages
 	def parseResults(self, response, *args):
 		# Redo request if response was not OK
-		return
 		if response.status != 200:
 			yield response.request.callback
 			return
