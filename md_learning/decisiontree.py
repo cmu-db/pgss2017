@@ -4,7 +4,8 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import numpy as np
 import graphviz
-from sklearn.tree import export_graphvizimport sys
+from sklearn.tree import export_graphviz
+import sys
 
 def myconv(x):
     if x.decode("utf-8") == "guilty":
@@ -16,7 +17,7 @@ def myconv(x):
 
 def main():
 
-    csv = np.genfromtxt('courtdatafile.csv', skip_header = 1, delimiter =',', converters={0:myconv})
+    csv = np.genfromtxt('datafile.csv', skip_header = 1, delimiter =',', converters={0:myconv})
 
     data = csv[:, 1:]
     target = csv[0:, 1]
