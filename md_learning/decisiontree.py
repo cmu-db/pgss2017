@@ -1,6 +1,11 @@
 import psycopg2
+from sklearn.datasets import load_breast_cancer
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 import numpy as np
-
+import graphviz
+from sklearn.tree import export_graphvizimport sys
 
 def myconv(x):
     if x.decode("utf-8") == "guilty":
@@ -23,21 +28,15 @@ def main():
 
     #select data from DB
     with cur:
-        cursor.execute('''SELECT cases.disposition, parties.race, parties.sex, parties.zip, charges.injuries, charges.property_damage
+        cur.execute('''SELECT cases.disposition, parties.race, parties.sex, parties.zip, charges.injuries, charges.property_damage
                  FROM cases
-                 JOIN parties ON cases.id = parties.id
-                 JOIN charges ON cases.id = charges.id
+                 JOIN parties ON cases.case_id = parties.case_id
+                 JOIN charges ON cases.case_id = charges.case_id
                  WHERE NULLIF(cases.disposition, '') IS NOT NULL''')
-        results = np.array(cursor.fetchall())
+        results = np.array(cur.fetchall())
         print(results)
-        d = dict()
-        for i, cases.disposition in enumerate(cases.disposition):
-            d[cases.disposition] = results[i]
-        return d
-        print(d)
-
-        data = d[:, 1:]
-        target = myconv(d[1, :])
+        data = results[:, 1:]
+        target = myconv(results[1, :])
 
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
@@ -45,4 +44,8 @@ def main():
     tree.fit(X_train,  y_train)
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
-#
+    #fix line (csv flie?)
+    export_graphviz(tree,  out_file='dispositiontree.dot',  class_names=['Guilty',  'Not Guilty'],  feature_names=cancer.feature_names,  impurity=False,  filled=True)
+
+
+if __name__ == '__main__': main()
