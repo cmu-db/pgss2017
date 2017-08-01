@@ -16,8 +16,7 @@ def myconv(x):
         return float(a)
 
 def main():
-
-    csv = np.genfromtxt('datafile.csv', skip_header = 1, delimiter =',', converters={0:myconv})
+    csv = np.genfromtxt('datafile.csv', skip_header = 1, delimiter ='|', converters={0:myconv})
 
     data = csv[:, 1:]
     target = csv[0:, 1]
