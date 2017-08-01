@@ -16,11 +16,13 @@ def myconv(x):
         return float(a)
 
 def main():
+    csv = np.genfromtxt('datafile.csv', dtype='float', skip_header = 1, delimiter ='|', converters={0:myconv})
+    ar = np.array(csv, dtype='f')
+    with open('datafile2.csv', 'w') as f:
+            f.write(str(ar))
 
-    csv = np.genfromtxt('datafile.csv', skip_header = 1, delimiter =',', converters={0:myconv})
-
-    data = csv[:, 1:]
-    target = csv[0:, 1]
+    data = ar[:, 1:]
+    target = ar[0:, 1]
 
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)

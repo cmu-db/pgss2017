@@ -14,18 +14,53 @@ def main():
         print('Unable to connect to PostgreSQL')
     cur = conn.cursor()
 
-    getquery = '''SELECT LOWER(charges.disposition), LOWER(parties.race), UPPER(parties.sex), parties.zip, charges.injuries, charges.property_damage
+    getquery = """SELECT charges.disposition, cases.court_system, cases.type, cases.filing_date, parties.race, parties.sex, parties.height, parties.weight, parties.state, parties.city, parties.zip, charges.description
                   FROM cases
                   JOIN parties ON cases.case_id = parties.case_id
                   JOIN charges ON cases.case_id = charges.case_id
-                  WHERE NULLIF(cases.disposition, '') IS NOT NULL'''
+                  WHERE NULLIF(charges.disposition, '') IS NOT NULL
+                  AND NULLIF(cases.court_system, '') IS NOT NULL
+                  AND NULLIF(cases.type, '') IS NOT NULL
+                  AND cases.filing_date IS NOT NULL
+                  AND NULLIF(parties.race, '') IS NOT NULL
+                  AND NULLIF(parties.sex, '') IS NOT NULL
+                  AND parties.height IS NOT NULL
+                  AND parties.weight IS NOT NULL
+                  AND NULLIF(parties.state, '') IS NOT NULL
+                  AND NULLIF(parties.city, '') IS NOT NULL
+                  AND NULLIF(parties.zip, '') IS NOT NULL
+                  AND NULLIF(charges.description, '') IS NOT NULL
+                  AND LOWER(parties.type) LIKE '%defendant%'
+                """
+
     print('query complete')
-    dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER".format(getquery)
-    print(dataoutput)
+    dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER DELIMITER '|'".format(getquery)
+    
     with open('datafile.csv', 'w') as f:
             cur.copy_expert(dataoutput, f)
 
-    print()
 
 
 if __name__ == '__main__': main()
+
+
+'''
+JOIN attorneys ON cases.case_id = attorneys.case_id
+JOIN events ON cases.case_id = events.case_id
+JOIN documents ON cases.case_id = documents.case_id
+JOIN judgements ON cases.case_id = judgements.case_id
+JOIN complaints ON cases.case_id = complaints.case_id
+'''
+
+'''
+NULLIF(cases.disposition, '') IS NOT NULL
+AND NULLIF(parties.race, '') IS NOT NULL
+AND NULLIF(parties.sex, '') IS NOT NULL
+AND NULLIF(parties.zip, '') IS NOT NULL
+'''
+
+'''
+cases.filing_date,
+ parties.height, parties.weight,'
+ '
+ '''
