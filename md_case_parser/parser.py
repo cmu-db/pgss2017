@@ -49,6 +49,15 @@ def parseCase(html):
 					mos = stripWhitespace(rows[i+4].get_text()) or '0'
 					days = stripWhitespace(rows[i+6].get_text()) or '0'
 					hrs = stripWhitespace(rows[i+8].get_text()) or '0'
+					# Cleanup intervals
+					if yrs.isdigit() and mos.isdigit():
+						iyrs = int(yrs)
+						imos = int(mos)
+						if imos > 12:
+							iyrs += imos // 12
+							imos %= 12
+							yrs = str(iyrs)
+							mos = str(imos)
 					interval = yrs + '-' + mos + ' ' + days + ' ' + hrs + ':00:00'
 					# Append as KVP
 					data[headerval] = interval
@@ -169,24 +178,25 @@ def formatAttrs(data, section, header):
 		# Get proper field names
 		formattedName = getAttributeName(field)
 		d[formattedName] = data[field]
-		# Format heights
-		if formattedName == 'height' and ('\'' in data[field] or '"' in data[field]):
-			vals = data[field].replace('"', '\'').split('\'')
-			d[formattedName] = str(int(vals[0]) * 12 + int(vals[1]))
-		# Format sex
-		elif formattedName == 'sex':
-			d[formattedName] = data[field].upper()[0]
-		# Format dates
-		elif ('date' in formattedName or formattedName == 'dob') and data[field]:
-			vals = data[field].split('/')
-			if len(vals) < 3:
-				d[formattedName] = vals[0] + '/01/' + vals[1]
-		# Format booleans
-		elif formattedName in {'probable_cause', 'accident_contribution', 'property_damage', 'seatbelts_used', 'mandatory_court_appearance'}:
-			d[formattedName] = data[field].lower() in {'y', 'yes'}
-		# Format traffic accident injuries
-		elif formattedName == 'injuries' and not data[field].isdigit():
-			d[formattedName] = 0
+		if data[field]:
+			# Format heights
+			if formattedName == 'height' and ('\'' in data[field] or '"' in data[field]):
+				vals = data[field].replace('"', '\'').split('\'')
+				d[formattedName] = str(int(vals[0]) * 12 + int(vals[1]))
+			# Format sex
+			elif formattedName == 'sex':
+				d[formattedName] = data[field].upper()[0]
+			# Format dates
+			elif ('date' in formattedName or formattedName == 'dob'):
+				vals = data[field].split('/')
+				if len(vals) < 3:
+					d[formattedName] = vals[0] + '/01/' + vals[1]
+			# Format booleans
+			elif formattedName in {'probable_cause', 'accident_contribution', 'property_damage', 'seatbelts_used', 'mandatory_court_appearance'}:
+				d[formattedName] = data[field].lower() in {'y', 'yes'}
+			# Format traffic accident injuries
+			elif formattedName == 'injuries' and not data[field].isdigit():
+				d[formattedName] = 0
 
 	# Assign attorneys a type based on what section they're in
 	if section.startswith('Attorney(s) for the '):

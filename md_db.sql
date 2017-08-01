@@ -21,7 +21,6 @@ CREATE TABLE cases(
 
 CREATE TABLE parties(
 	case_id VARCHAR REFERENCES cases NOT NULL,
-	id BIGSERIAL PRIMARY KEY,
 	name VARCHAR,
 	type VARCHAR,
 	bus_org_name VARCHAR,

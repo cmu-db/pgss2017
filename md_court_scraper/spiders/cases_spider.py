@@ -114,7 +114,7 @@ class CasesSpider(scrapy.Spider):
 	def parseResults(self, response, *args):
 		# Redo request if response was not OK
 		if response.status != 200:
-			yield response.request.callback
+			yield response.request
 			return
 		# Look for <a> in results table
 		caseLinks = response.css('table.results a::attr(href)').extract()
@@ -164,7 +164,11 @@ class CasesSpider(scrapy.Spider):
 			yield response.request
 			return
 		# Get case ID and execute query
-		case_id = extractCaseId(response.url)
+		try:
+			case_id = extractCaseId(response.url)
+		except:
+			self.logger.error('Failed to get case data for %s', response.url)
+			return
 		try:
 			self.cur.execute('INSERT INTO rawcases (case_id, html) VALUES (%s, %s)', (case_id, response.text))
 			self.conn.commit()
