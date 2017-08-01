@@ -53,8 +53,17 @@ def main():
 # Insert all the data for a case
 def insertCase(raw_case_id, html):
     print('%s...' % raw_case_id)
+
+    # Get the value for a field
+    def getFieldValue(field):
+        if field == 'case_id':
+            return case_id
+        else:
+            return data.get(field) or None
+
     # Parse HTML
     data = parseCase(html)
+
     # Store case ID
     try:
         case_id = data['cases'][0]['case_id']
@@ -64,30 +73,22 @@ def insertCase(raw_case_id, html):
         print('\nDeleted: nonsense')
         conn.commit()
         return
+
     # Insert data for each section/table
-    for section in data:
-        for entry in data[section]:
-            result = insertData(raw_case_id, case_id, entry, section)
-            if not result: return
-
-# Insert a row into a table
-def insertData(raw_case_id, case_id, data, table):
-    # Get the value for a field
-    def getFieldValue(field):
-        if field == 'case_id':
-            return case_id
-        else:
-            return data.get(field) or None
-
-    # Make sure data for this table exists
-    if data:
-        # Build tuple of col values
+    for table in data:
+        rows = []
         dataFields = TABLE_COLS[table]
-        dataTuple = tuple(getFieldValue(field) for field in dataFields)
-
-        # Execute insertion
+        for entry in data[table]:
+            # Build tuple of col values
+            dataTuple = tuple(getFieldValue(field) for field in dataFields)
+            rows.append(cur.mogrify('(' + '%s, ' * (len(dataFields) - 1) + '%s)', dataTuple).decode('utf-8'))
+        # Batch execute query
+        insertText = ','.join(rows)
+        cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES ' + insertText)
+        print(table, end=' ')
+        """
         try:
-            cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES (' + '%s, ' * (len(dataFields) - 1) + '%s)', dataTuple)
+            cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES ' + insertText)
             print(table, end=' ')
         except Exception as error:
             conn.rollback()
@@ -95,10 +96,8 @@ def insertData(raw_case_id, case_id, data, table):
             cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id,))
             print('\nDeleted: duplicate')
             conn.commit()
-            return False
-
-    # Commit changes to DB
-    conn.commit()
-    return True
+        """
+        # Commit changes to DB
+        conn.commit()
 
 if __name__ == '__main__': main()
