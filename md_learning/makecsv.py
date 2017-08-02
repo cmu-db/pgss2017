@@ -32,10 +32,8 @@ def main():
                   AND NULLIF(charges.description, '') IS NOT NULL
                   AND LOWER(parties.type) LIKE '%defendant%'
                 """
-
     print('query complete')
     dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER DELIMITER '|'".format(getquery)
-
     with open('datafile.csv', 'w') as f:
             cur.copy_expert(dataoutput, f)
 
@@ -45,22 +43,10 @@ if __name__ == '__main__': main()
 
 
 '''
+#CODE TO ADD OTHER TABLES
 JOIN attorneys ON cases.case_id = attorneys.case_id
 JOIN events ON cases.case_id = events.case_id
 JOIN documents ON cases.case_id = documents.case_id
 JOIN judgements ON cases.case_id = judgements.case_id
 JOIN complaints ON cases.case_id = complaints.case_id
 '''
-
-'''
-NULLIF(cases.disposition, '') IS NOT NULL
-AND NULLIF(parties.race, '') IS NOT NULL
-AND NULLIF(parties.sex, '') IS NOT NULL
-AND NULLIF(parties.zip, '') IS NOT NULL
-'''
-
-'''
-cases.filing_date,
- parties.height, parties.weight,'
- '
- '''

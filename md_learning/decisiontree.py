@@ -10,22 +10,92 @@ import pandas as pd
 
 le= LabelEncoder()
 
-count = 0
 guilty = ['Guilty',  'Guilty - Prepaid',  'Nolo Contendere',  'Probation Before Judgment',  'Probation Before Judgment - 292',  'Probation Before Judgment - 641',  'Probation Before Judgment - Supervised',  'Probation Before Judgment - Unsupervised']
 notguilty = ['Abated by Death',  'Compromise',  'Court Dismissed Case',  'Dismissed',  'Judgment of Acquittal',  'Nolle Prosequi',  'Not Guilty']
 inprocess = ['Forwarded - Circuit Court',  'Jury Trial Prayed',  'Merged',  'Merged with a Related Citation',  'Stet']
+
+#### simplyfy case types to criminal, civil and citations ####
+criminal = ['Citation - Criminal',  'Criminal', 'Criminal - Information',  'Criminal - SOC - Application','Criminal - Appeal', 'Criminal - Appeal - Motor Vehicle', 'Criminal - JTP', 'Criminal - JTP - Motor Vehicle', 'Criminal - SOC - On View Arrest', 'Criminal Appeal', 'Criminal Indictment', 'Criminal Non-Support', 'Jury Trial Criminal', 'Jury Trial-Criminal', 'Jury Trial Motor Vehicle', 'Jury Trial-Criminal', 'Jury Trial-Motor Vehicle', 'Motor Vehicle Appeal', 'Post Conviction', 'Violation of Probation']
+civil = ['Citation - Civil']
+citation = ['Citation - DNR',  'Citation - Mass Transit',  'Citation - Municipal Infraction',  'Citation - Traffic', 'Fugitive', 'Indictment', 'Information']
+
+#### simplyfy race to white, black, asian and others ####
+black = ['African American', 'African American/Black', 'Black']
+white = ['White', 'Caucasian', 'Caucasion']
+asian = ['Asian', 'Other Asian']
+hispanic = ['Hispanic']
+other = ['Unknown',  'Other', 'Indian', 'Unavailable']
+
+### simplyfy court type to civil criminal traffic ###
+criminalcourt = [' Criminal System', ' Criminal']
+trafficcourt = [' Traffic System']
+
 def main():
-    #reads original datafile from csv
+
+    #### open files  for processing ####
     courtdata = open('datafile.csv',  'r')
-    #creates new outputfile for grouped data
     outputfile = open('outputfile.csv',  'w')
+    inprocessfile = open('inprocess.csv',  'w')
+    courttype = 'courttype'
 
-
+    #### cleanup and simplify file from DB ####
     for row in courtdata:
         row = row.replace(',', ' ')
         data = row.split('|')
+
         disptemp = data[0]
-        restdata = data[1:11]
+
+        tempcourt = data[1]
+        court=tempcourt.split('-')
+        courtnametemp = court[0]
+
+        if len(court) > 1:
+            courttypetemp = court[1]
+            if courttypetemp in criminalcourt:
+                courttypetemp = 'criminal'
+            elif courttypetemp in trafficcourt:
+                courttypetemp = 'traffic'
+
+        type = data[2]
+        filingdate = data[3]
+        race = data[4]
+        restdata = data[5:9]
+        ziptemp = data[10]
+        newzip = ziptemp[:3]
+        if type in criminal:
+            type = 'criminal'
+        elif type in civil:
+            type = 'civil'
+        elif type in citation:
+            type = 'citation'
+
+        #print(race)
+        if race in black:
+            race = 'black'
+        elif race in white:
+            race = 'white'
+        elif race in asian:
+            race = 'asian'
+        #    print(race)
+        elif race in hispanic:
+            race = 'hispanic'
+        elif race in other:
+            race = 'other'
+
+        if courtnametemp == 'court_system':
+            courtname = 'courtname'
+        else:
+            courtname = courtnametemp
+
+        if len(court) > 1:
+            courttype = courttypetemp
+
+        restdata.insert(0,  race)
+        #restdata.insert(0,  filingdate)
+        restdata.insert(0,  type)
+        restdata.insert(0, courtname)
+        restdata.insert(0, courttype)
+
         if ':'  in disptemp:
             disp = disptemp.split(':')
             if disp[1] in guilty:
@@ -34,32 +104,47 @@ def main():
                 fieldval='not-guilty'
             else:
                 fieldval='in-process'
-            #restdata.insert(0,  disp[1])
             restdata.insert(0, fieldval)
+            restdata.insert(9,  newzip)
         else:
             if disptemp in guilty:
                 fieldval='guilty'
             elif disptemp in notguilty:
                 fieldval='not-guilty'
-            else:
+            elif disptemp in inprocess:
                 fieldval='in-process'
+            else:
+                fieldval=disptemp
             restdata.insert(0, fieldval)
+            restdata.insert(9,  newzip)
 
-        outdata = ','.join([str(item) for item in restdata])
-        outputfile.write(outdata+'\n')
+    #### seperate out cases that are already decided ####
+        if  (restdata[0] in ['guilty',  'not-guilty',  'disposition']):
+            outdata = ','.join([str(item) for item in restdata])
+            outputfile.write(outdata+'\n')
+
+    #### seperate out cases that are still in process for possible prediction later ####
+    if (restdata[0] in ['in-process',  'disposition']):
+        inprocessdata = ','.join([str(item) for item in restdata])
+        inprocessfile.write(inprocessdata+'\n')
+
     outputfile.close()
+    inprocessfile.close()
 
-
+    #### pre process simplified file to convert to a format friendly to decision tree classifier ####
     csv = pd.read_csv('outputfile.csv',  delimiter= ',')
     for col in csv.columns.values:
         if csv[col].dtype == 'object':
             output = csv[col]
             le.fit(output.values)
             csv[col]= le.transform(csv[col])
+    #print (type(output))
+    #print (csv.head())
     data = csv.iloc[1: , 1:]
     target = csv.iloc[1:,  0]
     feature_names = csv.iloc[0,  1:]
-    print ('class names are: ',  target.values)
+    print ('class names are: ',  feature_names.index)
+    #   print('feature name ', data)
 
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
@@ -68,6 +153,6 @@ def main():
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
         #fix line (csv flie?)
-    export_graphviz(tree,  out_file='dispositiontree.dot',   feature_names=feature_names.index,   impurity=False,  filled=True)
+    export_graphviz(tree,  out_file='dispositiontree.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
 
 if __name__ == '__main__': main()
