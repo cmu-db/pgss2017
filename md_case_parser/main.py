@@ -1,8 +1,35 @@
-import sys
 import psycopg2
+import sys
 from parser import parseCase
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from psycopg2.pool import ThreadedConnectionPool
 
-# EXAMPLE: python3 main.py localhost test user password 10
+# EXAMPLE: python3 main.py postgresql://user:pass@localhost/db 10
+
+# Set default case limit per query
+limit = 1000
+
+# Parse params
+args = sys.argv[1:]
+
+def main():
+    global limit, tcp
+
+    # This is only for testing
+    if len(args) > 1 and args[1] == 'test':
+        insertCase(open('test.html', 'r').read())
+    else:
+        # Create conn pool
+        tcp = ThreadedConnectionPool(1, 10, args[0])
+
+        # Apply case limit
+        if len(args) > 1 and args[1].isdigit():
+            limit = int(args[1])
+
+        # Iterate thru cases
+        with ThreadPoolExecutor(max_workers=50) as pool:
+            for i in range(50):
+                pool.submit(doParsing, (limit + 1) * i)
 
 # Field tuples for each table
 TABLE_COLS = {
@@ -16,51 +43,25 @@ TABLE_COLS = {
     'complaints': ('case_id', 'type', 'against', 'status', 'status_date', 'filing_date', 'amt')
 }
 
-def main():
-    global cur, conn
-
+def doParsing(offset):
     # Connect to DB
-    args = sys.argv[1:]
-    try:
-        conn = psycopg2.connect(host=args[0], database=args[1], user=args[2], password=args[3])
-        print('Connected to PostgreSQL', end='')
-    except:
-        print('Unable to connect to PostgreSQL')
+    conn = tcp.getconn()
     cur = conn.cursor()
 
-    # This is only for testing
-    if len(args) > 4 and args[4] == 'test':
-        insertCase(open('test.html', 'r').read())
-    else:
-        # Apply query args
-        limit = int(args[4])
-        if len(args) > 5 and args[5].isdigit():
-            offset = int(args[5])
-        else:
-            offset = None
+    # Get raw case HTML where we haven't already parsed it
+    cur.execute('SELECT rawcases.case_id, html FROM rawcases LEFT OUTER JOIN cases ON rawcases.case_id = cases.case_id WHERE cases.case_id IS NULL LIMIT %s OFFSET %s', (limit, offset))
 
-        # Get raw case HTML where we haven't already parsed it
-        cur.execute('SELECT rawcases.case_id, html FROM rawcases LEFT OUTER JOIN cases ON rawcases.case_id = cases.case_id WHERE cases.case_id IS NULL ORDER BY rawcases.case_id LIMIT %s OFFSET %s', (limit, offset))
+    # Iterate thru cases
+    results = cur.fetchall()
+    for i in range(len(results)):
+        print('[%s] %s remaining' % (results[i][0], len(results) - i))
+        insertCase(cur, conn, *results[i])
 
-        # Iterate thru cases
-        results = cur.fetchall()
-        for i in range(len(results)):
-            print('\n[%s remaining]' % (len(results) - i), end=' ')
-            insertCase(*results[i])
-
-    print('\n[Done]')
+    # Disconnect from DB
+    tcp.putconn(conn)
 
 # Insert all the data for a case
-def insertCase(raw_case_id, html):
-    print('%s...' % raw_case_id)
-
-    # Get the value for a field
-    def getFieldValue(field):
-        if field == 'case_id':
-            return case_id
-        else:
-            return data.get(field) or None
-
+def insertCase(cur, conn, raw_case_id, html):
     # Parse HTML
     data = parseCase(html)
 
@@ -70,15 +71,21 @@ def insertCase(raw_case_id, html):
     except KeyError:
         # Delete the case if it's nonsense
         cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id, ))
-        print('\nDeleted: nonsense')
+        print('[%s] Deleted: nonsense' % raw_case_id)
         conn.commit()
         return
 
     # Insert data for each section/table
-    for table in data:
+    def insertData(table):
         rows = []
         dataFields = TABLE_COLS[table]
         for entry in data[table]:
+            # Get the value for a field
+            def getFieldValue(field):
+                if field == 'case_id':
+                    return case_id
+                else:
+                    return entry.get(field) or None
             # Build tuple of col values
             dataTuple = tuple(getFieldValue(field) for field in dataFields)
             rows.append(cur.mogrify('(' + '%s, ' * (len(dataFields) - 1) + '%s)', dataTuple).decode('utf-8'))
@@ -86,15 +93,23 @@ def insertCase(raw_case_id, html):
         insertText = ','.join(rows)
         try:
             cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES ' + insertText)
-            print(table, end=' ')
-        except Exception as error:
-            conn.rollback()
-            print('\nError inserting %s row' % table, case_id)
-            cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id,))
-            print('\nDeleted: duplicate')
-            conn.commit()
+            print('[%s] Inserted: %s (%s)' % (case_id, table, len(rows)))
+        except psycopg2.IntegrityError as error:
+            if 'duplicate' in str(error):
+                conn.rollback()
+                print('[%s] Error inserting %s row: %s' % (case_id, table, str(error)))
+                cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id,))
+                print('[%s] Deleted: duplicate' % raw_case_id)
+                conn.commit()
+            else:
+                raise error
 
-        # Commit changes to DB
-        conn.commit()
+    insertData('cases')
+    for table in data:
+        if table != 'cases':
+            insertData(table)
+
+    # Commit changes to DB
+    conn.commit()
 
 if __name__ == '__main__': main()
