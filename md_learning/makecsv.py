@@ -35,7 +35,7 @@ def main():
 
     print('query complete')
     dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER DELIMITER '|'".format(getquery)
-    
+
     with open('datafile.csv', 'w') as f:
             cur.copy_expert(dataoutput, f)
 
