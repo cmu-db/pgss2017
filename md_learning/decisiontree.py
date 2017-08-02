@@ -61,7 +61,7 @@ def main():
         race = data[4]
         restdata = data[5:9]
         ziptemp = data[10]
-        newzip = ziptemp[:3]
+        newzip = ziptemp[:5]
         if type in criminal:
             type = 'criminal'
         elif type in civil:
@@ -144,6 +144,7 @@ def main():
     target = csv.iloc[1:,  0]
     feature_names = csv.iloc[0,  1:]
     print ('class names are: ',  feature_names.index)
+
     #   print('feature name ', data)
 
     #Code to create decision tree

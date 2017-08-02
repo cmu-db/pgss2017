@@ -14,7 +14,7 @@ def main():
         print('Unable to connect to PostgreSQL')
     cur = conn.cursor()
 
-    getquery = """SELECT charges.disposition, cases.court_system, cases.type, cases.filing_date, parties.race, parties.sex, parties.height, parties.weight, parties.state, parties.city, parties.zip, charges.description
+    getquery = """SELECT charges.disposition, cases.court_system, cases.type, cases.filing_date, parties.race, parties.sex, parties.height, parties.weight, parties.state, parties.city, SUBSTR(parties.zip, 1, 5) AS zip, charges.description
                   FROM cases
                   JOIN parties ON cases.case_id = parties.case_id
                   JOIN charges ON cases.case_id = charges.case_id
@@ -32,10 +32,10 @@ def main():
                   AND NULLIF(charges.description, '') IS NOT NULL
                   AND LOWER(parties.type) LIKE '%defendant%'
                 """
-    print('query complete')
     dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER DELIMITER '|'".format(getquery)
     with open('datafile.csv', 'w') as f:
             cur.copy_expert(dataoutput, f)
+            print('query complete')
 
 
 
