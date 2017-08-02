@@ -145,7 +145,7 @@ def formatOutput(data):
 				# Add all the data we found to the master dict
 				if output.get(header):
 					output[header] += entries
-				else:
+				elif entries:
 					output[header] = entries
 
 	# Move attorneys listed under parties to attorneys
@@ -182,7 +182,7 @@ def formatAttrs(data, section, header):
 			# Format heights
 			if formattedName == 'height' and ('\'' in data[field] or '"' in data[field]):
 				vals = data[field].replace('"', '\'').split('\'')
-				d[formattedName] = str(int(vals[0]) * 12 + int(vals[1]))
+				d[formattedName] = str(int(vals[0] or 0) * 12 + int(vals[1] or 0))
 			# Format sex
 			elif formattedName == 'sex':
 				d[formattedName] = data[field].upper()[0]
