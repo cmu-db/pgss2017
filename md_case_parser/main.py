@@ -1,20 +1,10 @@
-import sys
 import psycopg2
+import sys
 from parser import parseCase
-import threading
-from queue import Queue
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from psycopg2.pool import ThreadedConnectionPool
 
-# EXAMPLE: python3 main.py localhost test user password 10
-
-# Create the queue and threader
-q = Queue()
-
-# Do new workers
-def threader():
-    while True:
-        worker = q.get()
-        doParsing(worker)
-        q.task_done()
+# EXAMPLE: python3 main.py postgresql://user:pass@localhost/db 10
 
 # Set default case limit per query
 limit = 1000
@@ -23,29 +13,23 @@ limit = 1000
 args = sys.argv[1:]
 
 def main():
-    global limit
+    global limit, tcp
 
     # This is only for testing
-    if len(args) > 4 and args[4] == 'test':
+    if len(args) > 1 and args[1] == 'test':
         insertCase(open('test.html', 'r').read())
     else:
-        # How many threads to allow
-        for x in range(10):
-             t = threading.Thread(target=threader)
-             t.daemon = True
-             t.start()
+        # Create conn pool
+        tcp = ThreadedConnectionPool(1, 10, args[0])
 
         # Apply case limit
-        if len(args) > 4 and args[4].isdigit():
-            limit = int(args[4])
+        if len(args) > 1 and args[1].isdigit():
+            limit = int(args[1])
 
         # Iterate thru cases
-        for i in range(10):
-            q.put((limit + 1) * i)
-
-        # Wait until termination
-        q.join()
-
+        with ThreadPoolExecutor(max_workers=50) as pool:
+            for i in range(50):
+                pool.submit(doParsing, (limit + 1) * i)
 
 # Field tuples for each table
 TABLE_COLS = {
@@ -61,26 +45,20 @@ TABLE_COLS = {
 
 def doParsing(offset):
     # Connect to DB
-    args = sys.argv[1:]
-    try:
-        conn = psycopg2.connect(host=args[0], database=args[1], user=args[2], password=args[3])
-        print('[%s] Connected to PostgreSQL' % threading.current_thread().name)
-    except:
-        print('[%s] Unable to connect to PostgreSQL' % threading.current_thread().name)
+    conn = tcp.getconn()
     cur = conn.cursor()
 
-    # This is only for testing
-    if len(args) > 4 and args[4] == 'test':
-        insertCase(open('test.html', 'r').read())
-    else:
-        # Get raw case HTML where we haven't already parsed it
-        cur.execute('SELECT rawcases.case_id, html FROM rawcases LEFT OUTER JOIN cases ON rawcases.case_id = cases.case_id WHERE cases.case_id IS NULL LIMIT %s OFFSET %s', (limit, offset))
+    # Get raw case HTML where we haven't already parsed it
+    cur.execute('SELECT rawcases.case_id, html FROM rawcases LEFT OUTER JOIN cases ON rawcases.case_id = cases.case_id WHERE cases.case_id IS NULL LIMIT %s OFFSET %s', (limit, offset))
 
-        # Iterate thru cases
-        results = cur.fetchall()
-        for i in range(len(results)):
-            print('[%s] %s (%s remaining) ' % (threading.current_thread().name, results[i][0], len(results) - i))
-            insertCase(cur, conn, *results[i])
+    # Iterate thru cases
+    results = cur.fetchall()
+    for i in range(len(results)):
+        print('[%s] %s remaining' % (results[i][0], len(results) - i))
+        insertCase(cur, conn, *results[i])
+
+    # Disconnect from DB
+    tcp.putconn(conn)
 
 # Insert all the data for a case
 def insertCase(cur, conn, raw_case_id, html):
@@ -93,7 +71,7 @@ def insertCase(cur, conn, raw_case_id, html):
     except KeyError:
         # Delete the case if it's nonsense
         cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id, ))
-        print('[%s] [%s] Deleted: nonsense' % (threading.current_thread().name, raw_case_id))
+        print('[%s] Deleted: nonsense' % raw_case_id)
         conn.commit()
         return
 
@@ -115,13 +93,13 @@ def insertCase(cur, conn, raw_case_id, html):
         insertText = ','.join(rows)
         try:
             cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES ' + insertText)
-            print('[%s] [%s] Inserted: %s (%s)' % (threading.current_thread().name, case_id, table, len(rows)))
+            print('[%s] Inserted: %s (%s)' % (case_id, table, len(rows)))
         except psycopg2.IntegrityError as error:
             if 'duplicate' in str(error):
                 conn.rollback()
-                print('[%s] [%s] Error inserting %s row: %s' % (threading.current_thread().name, case_id, table, str(error)))
+                print('[%s] Error inserting %s row: %s' % (case_id, table, str(error)))
                 cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id,))
-                print('[%s] [%s] Deleted: duplicate' % (threading.current_thread().name, raw_case_id))
+                print('[%s] Deleted: duplicate' % raw_case_id)
                 conn.commit()
             else:
                 raise error
