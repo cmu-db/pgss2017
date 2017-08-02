@@ -84,9 +84,6 @@ def insertCase(raw_case_id, html):
             rows.append(cur.mogrify('(' + '%s, ' * (len(dataFields) - 1) + '%s)', dataTuple).decode('utf-8'))
         # Batch execute query
         insertText = ','.join(rows)
-        cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES ' + insertText)
-        print(table, end=' ')
-        """
         try:
             cur.execute('INSERT INTO ' + table + ' ' + str(dataFields).replace('\'', '') + ' VALUES ' + insertText)
             print(table, end=' ')
@@ -96,7 +93,7 @@ def insertCase(raw_case_id, html):
             cur.execute('DELETE FROM rawcases WHERE case_id = %s', (raw_case_id,))
             print('\nDeleted: duplicate')
             conn.commit()
-        """
+
         # Commit changes to DB
         conn.commit()
 
