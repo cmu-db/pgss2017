@@ -31,6 +31,7 @@ def main():
                   AND NULLIF(parties.zip, '') IS NOT NULL
                   AND NULLIF(charges.description, '') IS NOT NULL
                   AND LOWER(parties.type) LIKE '%defendant%'
+                  AND LENGTH(parties.zip) = 5
                 """
     dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER DELIMITER '|'".format(getquery)
     with open('datafile.csv', 'w') as f:

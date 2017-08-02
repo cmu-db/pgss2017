@@ -10,14 +10,15 @@ import pandas as pd
 
 le= LabelEncoder()
 
-guilty = ['Guilty',  'Guilty - Prepaid',  'Nolo Contendere',  'Probation Before Judgment',  'Probation Before Judgment - 292',  'Probation Before Judgment - 641',  'Probation Before Judgment - Supervised',  'Probation Before Judgment - Unsupervised']
+guilty = ['Guilty',  'Guilty - Prepaid',  'Nolo Contendere']
 notguilty = ['Abated by Death',  'Compromise',  'Court Dismissed Case',  'Dismissed',  'Judgment of Acquittal',  'Nolle Prosequi',  'Not Guilty']
-inprocess = ['Forwarded - Circuit Court',  'Jury Trial Prayed',  'Merged',  'Merged with a Related Citation',  'Stet']
+inprocess = ['Probation Before Judgment',  'Probation Before Judgment - 292',  'Probation Before Judgment - 641',  'Probation Before Judgment - Supervised',  'Probation Before Judgment - Unsupervised', 'Forwarded - Circuit Court',  'Jury Trial Prayed',  'Merged',  'Merged with a Related Citation',  'Stet']
 
 #### simplyfy case types to criminal, civil and citations ####
-criminal = ['Citation - Criminal',  'Criminal', 'Criminal - Information',  'Criminal - SOC - Application','Criminal - Appeal', 'Criminal - Appeal - Motor Vehicle', 'Criminal - JTP', 'Criminal - JTP - Motor Vehicle', 'Criminal - SOC - On View Arrest', 'Criminal Appeal', 'Criminal Indictment', 'Criminal Non-Support', 'Jury Trial Criminal', 'Jury Trial-Criminal', 'Jury Trial Motor Vehicle', 'Jury Trial-Criminal', 'Jury Trial-Motor Vehicle', 'Motor Vehicle Appeal', 'Post Conviction', 'Violation of Probation']
+criminal = ['CRIMINAL', 'Criminal', 'Citation - DNR', 'Citation - Civil', 'Citation - Mass Transit', 'Citation - Criminal', 'Criminal Appeal', 'Jury Trial Criminal', 'Criminal - Information', 'Indictment', 'Jury Trial Motor Vehicle', 'Criminal Indictment', 'Criminal - JTP', 'Information', 'Other Appeal', 'Citation - Municipal Infraction', 'Criminal - JTP - Motor Vehicle', 'FUGITIVE WARRANT', 'Fugitive', 'Motor Vehicle Appeal', 'Criminal - Appeal', 'Jury Trial-Criminal', 'Criminal - SOC - On View Arrest', 'Jury Trial-Motor Vehicle', 'Criminal - Appeal - Motor Vehicle', 'Criminal Non-Support', 'Criminal/Non Support', 'Violation of Probation', 'Juvenile - Adult Failure to Send', 'Violation Of Probation', 'Post Conviction', 'Non-Support']
 civil = ['Citation - Civil']
-citation = ['Citation - DNR',  'Citation - Mass Transit',  'Citation - Municipal Infraction',  'Citation - Traffic', 'Fugitive', 'Indictment', 'Information']
+citation = ['MASS TRANSIT CITATION',  'DEPT OF NATURAL RESOURCES CITATION',  'CIVIL CITATION', 'HOUSING AUTHORITY', 'MUNICIPAL INFRACTION']
+other = ['']
 
 #### simplyfy race to white, black, asian and others ####
 black = ['African American', 'African American/Black', 'Black']
@@ -62,6 +63,7 @@ def main():
         restdata = data[5:9]
         ziptemp = data[10]
         newzip = ziptemp[:5]
+
         if type in criminal:
             type = 'criminal'
         elif type in civil:
@@ -149,7 +151,7 @@ def main():
 
     #Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
-    tree = DecisionTreeClassifier(max_depth=4,  random_state=0) # pre pruned tree limiting depth
+    tree = DecisionTreeClassifier(max_depth=5,  random_state=0) # pre pruned tree limiting depth
     tree.fit(X_train,  y_train)
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
