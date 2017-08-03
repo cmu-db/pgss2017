@@ -2,7 +2,6 @@ import sys
 import psycopg2
 import numpy as np
 
-
 global cur, conn
 
 # Connect to DB
@@ -26,7 +25,7 @@ def civiltype():
 
     cur.execute(getquery)
     civil_case_type = cur.fetchall()
-    masterString = ""
+    masterString = "CIVIL"
 
     for element in civil_case_type:
         x = ("'%s'," % element[0])
@@ -67,7 +66,7 @@ def citationtype():
 
     cur.execute(getquery)
     civil_case_type = list(cur.fetchall())
-    masterString = ""
+    masterString = "CIVIL CITATIONS"
 
     for element in civil_case_type:
         x = ("'%s'," % element[0])
@@ -87,7 +86,7 @@ def traffictype():
 
     cur.execute(getquery)
     civil_case_type = list(cur.fetchall())
-    masterString = ""
+    masterString = "TRAFFIC"
 
     for element in civil_case_type:
         x = ("'%s'," % element[0])
