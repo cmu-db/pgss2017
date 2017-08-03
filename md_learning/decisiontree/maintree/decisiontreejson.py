@@ -10,6 +10,7 @@ from sklearn.tree import export_graphviz
 import sys
 import pandas as pd
 import json
+import csv
 
 le= LabelEncoder()
 
@@ -24,38 +25,22 @@ asian = ['Asian', 'Other Asian', 'ASIAN, NATIVE HAWAIIAN,OTHER PACIFIC ISLANDER'
 hispanic = ['Hispanic']
 other = ['WHITE, CAUCASIAN, ASIATIC INDIAN, ARAB', 'WHITE,CAUCASIAN,ASIATIC INDIAN,ARAB', 'UNKNOWN,OTHER', 'Other', 'UNKNOWN, OTHER',  'Unavailable', 'AMERICAN INDIAN, ALASKA NATIVE', 'Indian', 'UNKNOWN',  'AMERICAN INDIAN,ALASKA NATIVE', 'Unknown', 'OTHER']
 
-### simplyfy court casetype to civil criminal traffic ###
-criminalcourt = [' Criminal System', ' Criminal']
-trafficcourt = [' Traffic System']
-civilcourt = []
-
 #### simplyfy case types to criminal, civil and citations ####
 typedata = json.load(open('types.json'))
 
 def main():
     #### open files  for processing ####
-    courtdata = open('datafile.csv',  'r')
+    courtdata = csv.reader(open('datafile.csv',  'r'), delimiter='|')
     outputfile = open('outputfile.csv',  'w')
     inprocessfile = open('inprocess.csv',  'w')
-    courttype = 'courttype'
 
     #### cleanup and simplify file from DB ####
-    for row in courtdata:
-        row = row.replace(',', ' ')
-        data = row.split('|')
-
+    for data in courtdata:
         disptemp = data[0]
 
         tempcourt = data[1]
         court=tempcourt.split('-')
         courtnametemp = court[0]
-
-        if len(court) > 1:
-            courttypetemp = court[1]
-            if courttypetemp in criminalcourt:
-                courttypetemp = 'criminal'
-            elif courttypetemp in trafficcourt:
-                courttypetemp = 'traffic'
 
         casetype = data[2]
         filingdate = data[3]
@@ -66,10 +51,6 @@ def main():
 
         if casetype in typedata['criminal']:
             casetype = 'criminal'
-        elif casetype in typedata['civil']:
-            casetype = 'civil'
-        elif casetype in typedata['civil citation']:
-            casetype = 'civil citation'
         elif casetype in typedata['traffic']:
             casetype = 'traffic'
 
@@ -91,14 +72,10 @@ def main():
         else:
             courtname = courtnametemp
 
-        if len(court) > 1:
-            courttype = courttypetemp
-
         restdata.insert(0,  race)
         #restdata.insert(0,  filingdate)
         restdata.insert(0,  casetype)
-        restdata.insert(0, courtname)
-        restdata.insert(0, courttype)
+        #restdata.insert(0, courtname)
 
         if ':'  in disptemp:
             disp = disptemp.split(':')
@@ -122,12 +99,12 @@ def main():
             restdata.insert(0, fieldval)
             restdata.insert(9,  newzip)
 
-    #### seperate out cases that are already decided ####
+        # seperate out cases that are already decided ####
         if  (restdata[0] in ['guilty',  'not-guilty',  'disposition']):
             outdata = ','.join([str(item) for item in restdata])
             outputfile.write(outdata+'\n')
 
-    #### seperate out cases that are still in process for possible prediction later ####
+    # seperate out cases that are still in process for possible prediction later ####
     if (restdata[0] in ['in-process',  'disposition']):
         inprocessdata = ','.join([str(item) for item in restdata])
         inprocessfile.write(inprocessdata+'\n')
@@ -136,20 +113,20 @@ def main():
     inprocessfile.close()
 
     #### pre process simplified file to convert to a format friendly to decision tree classifier ####
-    csv = pd.read_csv('outputfile.csv',  delimiter= ',')
-    for col in csv.columns.values:
-        if csv[col].dtype == 'object':
-            output = csv[col]
+    output_csv = pd.read_csv('outputfile.csv',  delimiter= ',')
+    for col in output_csv.columns.values:
+        if output_csv[col].dtype == 'object':
+            output = output_csv[col]
             if(col == 'zip'):
                 for i in range(len(output.values)):
                     output.values[i] = str(output.values[i])
             le.fit(output.values)
-            csv[col]= le.transform(csv[col])
+            output_csv[col]= le.transform(output_csv[col])
     #print (casetype(output))
     #print (csv.head())
-    data = csv.iloc[1: , 1:]
-    target = csv.iloc[1:,  0]
-    feature_names = csv.iloc[0,  1:]
+    data = output_csv.iloc[1: , 1:]
+    target = output_csv.iloc[1:,  0]
+    feature_names = output_csv.iloc[0,  1:]
     print ('class names are: ',  feature_names.index)
 
     #   print('feature name ', data)
@@ -161,7 +138,7 @@ def main():
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
         #fix line (csv flie?)
-    export_graphviz(tree,  out_file='dispositiontreejson.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
+    export_graphviz(tree,  out_file='dispositiontree.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
     n_features = data.shape[1]
     plt.barh(range(n_features),  tree.feature_importances_,  align='center')
     plt.yticks(np.arange(n_features),  feature_names.index)
