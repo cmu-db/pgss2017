@@ -182,6 +182,12 @@ def main():
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
 
     ####  Create Decision Tree Graph using graphviz ####
-    export_graphviz(tree,  out_file='dispositiontree.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
+    export_graphviz(tree,  out_file='dispositiontreecsv.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
+    n_features = data.shape[1]
+    plt.barh(range(n_features),  tree.feature_importances_,  align='center')
+    plt.yticks(np.arange(n_features),  feature_names.index)
+    plt.xlabel('Feature Importances')
+    plt.ylabel('Feature')
+    plt.show()
 
 if __name__ == '__main__': main()

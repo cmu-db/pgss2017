@@ -16,7 +16,7 @@ cur = conn.cursor()
 
 
 def civiltype():
-    getquery = """SELECT 'CIVIL',  type
+    getquery = """SELECT type
                   FROM cases
                   WHERE LOWER(court_system) LIKE '%civil%'
                   AND LOWER(court_system) NOT LIKE '%civil citation%'
@@ -39,7 +39,7 @@ def civiltype():
 
 
 def criminaltype():
-    getquery = """SELECT 'CRIMINAL',type
+    getquery = """SELECT type
                   FROM cases
                   WHERE LOWER(court_system) LIKE '%criminal%'
                   GROUP BY type
@@ -59,7 +59,7 @@ def criminaltype():
             print('query complete')
 
 def citationtype():
-    getquery = """SELECT 'CITATIONS' , type
+    getquery = """SELECT type
                   FROM cases
                   WHERE LOWER(court_system) LIKE '%civil citation%'
                   GROUP BY type
@@ -79,7 +79,7 @@ def citationtype():
             print('query complete')
 
 def traffictype():
-    getquery = """SELECT 'TRAFFIC', type
+    getquery = """SELECT type
                   FROM cases
                   WHERE LOWER(court_system) LIKE '%traffic%'
                   GROUP BY type

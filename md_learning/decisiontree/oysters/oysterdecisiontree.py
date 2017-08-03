@@ -34,7 +34,7 @@ typedata = json.load(open('types.json'))
 
 def main():
     #### open files  for processing ####
-    courtdata = open('datafile.csv',  'r')
+    courtdata = open('oysterdatafile.csv',  'r')
     outputfile = open('outputfile.csv',  'w')
     inprocessfile = open('inprocess.csv',  'w')
     courttype = 'courttype'
@@ -161,7 +161,7 @@ def main():
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
         #fix line (csv flie?)
-    export_graphviz(tree,  out_file='dispositiontreejson.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
+    export_graphviz(tree,  out_file='oysterdispositiontreejson.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
     n_features = data.shape[1]
     plt.barh(range(n_features),  tree.feature_importances_,  align='center')
     plt.yticks(np.arange(n_features),  feature_names.index)
