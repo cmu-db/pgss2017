@@ -1,114 +1,30 @@
 import sys
 import psycopg2
-import numpy as np
+import json
 
-global cur, conn
-
-# Connect to DB
-args = sys.argv[1:]
-try:
-    conn = psycopg2.connect(host=args[0], database=args[1], user=args[2], password=args[3])
-    print('connected')
-except:
-    print('Unable to connect to PostgreSQL')
-cur = conn.cursor()
-
-
-def civiltype():
-    getquery = """SELECT  type
-                  FROM cases
-                  WHERE LOWER(court_system) LIKE '%civil%'
-                  AND LOWER(court_system) NOT LIKE '%civil citation%'
-                  GROUP BY type
-                """
-
-
-    cur.execute(getquery)
-    civil_case_type = cur.fetchall()
-    masterString = "CIVIL"
-
-    for element in civil_case_type:
-        x = ("'%s'," % element[0])
-        masterString = masterString + x + " "
-
-    print("civil types are: " + masterString)
-    with open('types.csv', 'w') as f:
-            f.write(masterString + '\n')
-            print('query complete')
-
-
-def criminaltype():
-    getquery = """SELECT type
-                  FROM cases
-                  WHERE LOWER(court_system) LIKE '%criminal%'
-                  GROUP BY type
-               """
-
-    cur.execute(getquery)
-    civil_case_type = list(cur.fetchall())
-    masterString = ""
-
-    for element in civil_case_type:
-        x = ("'%s'," % element[0])
-        masterString = str(masterString + x + " ")
-
-    print("criminal types is: " + masterString)
-    with open('types.csv', 'a') as f:
-            f.write(masterString + '\n')
-            print('query complete')
-
-def citationtype():
-    getquery = """SELECT  type
-                  FROM cases
-                  WHERE LOWER(court_system) LIKE '%civil citation%'
-                  GROUP BY type
-               """
-
-    cur.execute(getquery)
-    civil_case_type = list(cur.fetchall())
-    masterString = "CIVIL CITATIONS"
-
-    for element in civil_case_type:
-        x = ("'%s'," % element[0])
-        masterString = str(masterString + x + " ")
-
-    print("citation types are: " + masterString)
-    with open('types.csv', 'a') as f:
-            f.write(masterString + '\n')
-            print('query complete')
-
-def traffictype():
-    getquery = """SELECT  type
-                  FROM cases
-                  WHERE LOWER(court_system) LIKE '%traffic%'
-                  GROUP BY type
-               """
-
-    cur.execute(getquery)
-    civil_case_type = list(cur.fetchall())
-    masterString = "TRAFFIC"
-
-    for element in civil_case_type:
-        x = ("'%s'," % element[0])
-        masterString = str(masterString + x + " ")
-
-    print("traffic types are: " + masterString)
-    with open('types.csv', 'a') as f:
-            f.write(masterString + '\n')
-            print('query complete')
-
+def getCaseTypes(t):
+    # Get types for given court system from DB
+    if t == 'civil':
+        cur.execute("SELECT type FROM cases WHERE LOWER(court_system) LIKE '%civil%' AND LOWER(court_system) NOT LIKE '%civil citation%' GROUP BY type")
+    else:
+        cur.execute("SELECT type FROM cases WHERE LOWER(court_system) LIKE '%" + t + "%' GROUP BY type")
+    # Build list of types from results
+    results = cur.fetchall()
+    return [r[0] for r in results][1:]
 
 def main():
-    civiltype()
-    criminaltype()
-    traffictype()
-    citationtype()
+    global cur, conn
 
+    # Connect to DB
+    args = sys.argv[1:]
+    conn = psycopg2.connect(host=args[0], database=args[1], user=args[2], password=args[3])
+    cur = conn.cursor()
 
+    # Get all case types
+    types = {t: getCaseTypes(t) for t in {'civil', 'criminal', 'traffic', 'civil citation'}}
 
-
-
-
-
+    # Write to file
+    with open('types.json', 'w') as f:
+        f.write(json.dumps(types))
 
 if __name__ == '__main__': main()
