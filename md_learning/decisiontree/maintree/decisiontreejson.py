@@ -97,7 +97,7 @@ def main():
         restdata.insert(0,  race)
         #restdata.insert(0,  filingdate)
         restdata.insert(0,  casetype)
-        #restdata.insert(0, courtname)
+        restdata.insert(0, courtname)
         restdata.insert(0, courttype)
 
         if ':'  in disptemp:
