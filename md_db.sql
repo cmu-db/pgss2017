@@ -35,6 +35,7 @@ CREATE TABLE parties(
 	state VARCHAR,
 	zip VARCHAR
 );
+CREATE INDEX ON parties (case_id);
 
 CREATE TABLE attorneys(
 	case_id VARCHAR REFERENCES cases NOT NULL,
@@ -48,6 +49,7 @@ CREATE TABLE attorneys(
 	state VARCHAR,
 	zip VARCHAR
 );
+CREATE INDEX ON attorneys (case_id);
 
 CREATE TABLE events(
 	case_id VARCHAR REFERENCES cases NOT NULL,
@@ -57,6 +59,7 @@ CREATE TABLE events(
 	result VARCHAR,
 	result_date DATE
 );
+CREATE INDEX ON events (case_id);
 
 CREATE TABLE charges(
 	case_id VARCHAR REFERENCES cases NOT NULL,
@@ -100,12 +103,14 @@ CREATE TABLE charges(
 	cws_location VARCHAR,
 	cws_date TIMESTAMP
 );
+CREATE INDEX ON charges (case_id);
 
 CREATE TABLE documents(
 	case_id VARCHAR REFERENCES cases NOT NULL,
 	name VARCHAR,
 	filing_date DATE
 );
+CREATE INDEX ON docuements (case_id);
 
 CREATE TABLE judgements(
 	case_id VARCHAR REFERENCES cases NOT NULL,
@@ -116,6 +121,7 @@ CREATE TABLE judgements(
 	interest MONEY,
 	amt MONEY
 );
+CREATE INDEX ON judgements (case_id);
 
 CREATE TABLE complaints(
 	case_id VARCHAR REFERENCES cases NOT NULL,
@@ -126,3 +132,4 @@ CREATE TABLE complaints(
 	filing_date DATE,
 	amt MONEY
 );
+CREATE INDEX ON complaints (case_id);
