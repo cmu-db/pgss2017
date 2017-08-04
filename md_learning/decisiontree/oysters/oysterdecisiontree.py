@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -7,6 +9,7 @@ import graphviz
 from sklearn.tree import export_graphviz
 import sys
 import pandas as pd
+import json
 
 le= LabelEncoder()
 
@@ -14,27 +17,24 @@ guilty = ['Guilty',  'Guilty - Prepaid',  'Nolo Contendere']
 notguilty = ['Abated by Death',  'Compromise',  'Court Dismissed Case',  'Dismissed',  'Judgment of Acquittal',  'Nolle Prosequi',  'Not Guilty']
 inprocess = ['Probation Before Judgment',  'Probation Before Judgment - 292',  'Probation Before Judgment - 641',  'Probation Before Judgment - Supervised',  'Probation Before Judgment - Unsupervised', 'Forwarded - Circuit Court',  'Jury Trial Prayed',  'Merged',  'Merged with a Related Citation',  'Stet']
 
-#### simplyfy case types to criminal, civil and citations ####
-criminal = ['CRIMINAL', 'Criminal', 'Citation - DNR', 'Citation - Civil', 'Citation - Mass Transit', 'Citation - Criminal', 'Criminal Appeal', 'Jury Trial Criminal', 'Criminal - Information', 'Indictment', 'Jury Trial Motor Vehicle', 'Criminal Indictment', 'Criminal - JTP', 'Information', 'Other Appeal', 'Citation - Municipal Infraction', 'Criminal - JTP - Motor Vehicle', 'FUGITIVE WARRANT', 'Fugitive', 'Motor Vehicle Appeal', 'Criminal - Appeal', 'Jury Trial-Criminal', 'Criminal - SOC - On View Arrest', 'Jury Trial-Motor Vehicle', 'Criminal - Appeal - Motor Vehicle', 'Criminal Non-Support', 'Criminal/Non Support', 'Violation of Probation', 'Juvenile - Adult Failure to Send', 'Violation Of Probation', 'Post Conviction', 'Non-Support']
-civil = ['Citation - Civil']
-citation = ['MASS TRANSIT CITATION',  'DEPT OF NATURAL RESOURCES CITATION',  'CIVIL CITATION', 'HOUSING AUTHORITY', 'MUNICIPAL INFRACTION']
-other = ['']
-
 #### simplyfy race to white, black, asian and others ####
-black = ['African American', 'African American/Black', 'Black']
-white = ['White', 'Caucasian', 'Caucasion']
-asian = ['Asian', 'Other Asian']
+black = ['BLACK, AFRICAN AMERICAN', 'BLACK,AFRICAN AMERICAN', 'Black', 'BLACK', 'African American', 'Black', 'African American', 'African American/Black', ]
+white = ['White', 'Caucasian', 'WHITE', 'Caucasion']
+asian = ['Asian', 'Other Asian', 'ASIAN, NATIVE HAWAIIAN,OTHER PACIFIC ISLANDER', 'ASIAN, NATIVE HAWAIIAN, OTHER PACIFIC ISLANDER', 'Native Hawaiian or Other Pacific Islander', 'INDIAN']
 hispanic = ['Hispanic']
-other = ['Unknown',  'Other', 'Indian', 'Unavailable']
+other = ['WHITE, CAUCASIAN, ASIATIC INDIAN, ARAB', 'WHITE,CAUCASIAN,ASIATIC INDIAN,ARAB', 'UNKNOWN,OTHER', 'Other', 'UNKNOWN, OTHER',  'Unavailable', 'AMERICAN INDIAN, ALASKA NATIVE', 'Indian', 'UNKNOWN',  'AMERICAN INDIAN,ALASKA NATIVE', 'Unknown', 'OTHER']
 
-### simplyfy court type to civil criminal traffic ###
+### simplyfy court casetype to civil criminal traffic ###
 criminalcourt = [' Criminal System', ' Criminal']
 trafficcourt = [' Traffic System']
+civilcourt = []
+
+#### simplyfy case types to criminal, civil and citations ####
+typedata = json.load(open('types.json'))
 
 def main():
-
     #### open files  for processing ####
-    courtdata = open('datafile.csv',  'r')
+    courtdata = open('oysterdatafile.csv',  'r')
     outputfile = open('outputfile.csv',  'w')
     inprocessfile = open('inprocess.csv',  'w')
     courttype = 'courttype'
@@ -57,19 +57,21 @@ def main():
             elif courttypetemp in trafficcourt:
                 courttypetemp = 'traffic'
 
-        type = data[2]
+        casetype = data[2]
         filingdate = data[3]
         race = data[4]
         restdata = data[5:9]
         ziptemp = data[10]
         newzip = ziptemp[:5]
 
-        if type in criminal:
-            type = 'criminal'
-        elif type in civil:
-            type = 'civil'
-        elif type in citation:
-            type = 'citation'
+        if casetype in typedata['criminal']:
+            casetype = 'criminal'
+        elif casetype in typedata['civil']:
+            casetype = 'civil'
+        elif casetype in typedata['civil citation']:
+            casetype = 'civil citation'
+        elif casetype in typedata['traffic']:
+            casetype = 'traffic'
 
         #print(race)
         if race in black:
@@ -93,10 +95,7 @@ def main():
             courttype = courttypetemp
 
         restdata.insert(0,  race)
-        #restdata.insert(0,  filingdate)
-        restdata.insert(0,  type)
-        restdata.insert(0, courtname)
-        restdata.insert(0, courttype)
+        restdata.insert(0,  casetype)
 
         if ':'  in disptemp:
             disp = disptemp.split(':')
@@ -120,12 +119,12 @@ def main():
             restdata.insert(0, fieldval)
             restdata.insert(9,  newzip)
 
-    #### seperate out cases that are already decided ####
+    # seperate out cases that are already decided ####
         if  (restdata[0] in ['guilty',  'not-guilty',  'disposition']):
             outdata = ','.join([str(item) for item in restdata])
             outputfile.write(outdata+'\n')
 
-    #### seperate out cases that are still in process for possible prediction later ####
+    # seperate out cases that are still in process for possible prediction later ####
     if (restdata[0] in ['in-process',  'disposition']):
         inprocessdata = ','.join([str(item) for item in restdata])
         inprocessfile.write(inprocessdata+'\n')
@@ -133,29 +132,41 @@ def main():
     outputfile.close()
     inprocessfile.close()
 
-    #### pre process simplified file to convert to a format friendly to decision tree classifier ####
+    # pre process simplified file to convert to a format friendly to decision tree classifier ####
     csv = pd.read_csv('outputfile.csv',  delimiter= ',')
     for col in csv.columns.values:
         if csv[col].dtype == 'object':
             output = csv[col]
+            if(col == 'zip'):
+                for i in range(len(output.values)):
+                    output.values[i] = str(output.values[i])
             le.fit(output.values)
             csv[col]= le.transform(csv[col])
-    #print (type(output))
-    #print (csv.head())
     data = csv.iloc[1: , 1:]
     target = csv.iloc[1:,  0]
     feature_names = csv.iloc[0,  1:]
     print ('class names are: ',  feature_names.index)
 
-    #   print('feature name ', data)
-
-    #Code to create decision tree
+    # Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
-    tree = DecisionTreeClassifier(max_depth=5,  random_state=0) # pre pruned tree limiting depth
+    tree = DecisionTreeClassifier(max_depth=4,  random_state=0) # pre pruned tree limiting depth
     tree.fit(X_train,  y_train)
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
-        #fix line (csv flie?)
-    export_graphviz(tree,  out_file='dispositiontree.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
+    export_graphviz(tree,  out_file='oysterdispositiontree.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
+    n_features = data.shape[1]
+
+    fig, ax = plt.subplots()
+
+    ax.barh(range(n_features),  tree.feature_importances_,  align='center')
+    print(tree.feature_importances_)
+    plt.yticks(np.arange(n_features),  feature_names.index)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    plt.xlabel('Importance')
+    plt.ylabel('Feature')
+    #plt.show()
+    plt.savefig('featureimp.png', dpi=300, transparent = True)
+
 
 if __name__ == '__main__': main()
