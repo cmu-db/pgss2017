@@ -1,10 +1,3 @@
-'''SELECT description,
-FROM charges
-WHERE LOWER(description) LIKE '%oyster%'
-GROUP BY description
-ORDER BY count DESC;'''
-
-
 import sys
 import psycopg2
 import numpy as np
@@ -39,23 +32,10 @@ def main():
                   AND NULLIF(parties.zip, '') IS NOT NULL
                   AND NULLIF(charges.description, '') IS NOT NULL
                   AND LOWER(parties.type) LIKE '%defendant%'
-                  AND LENGTH(parties.zip) = 5
-                """
+                  AND LENGTH(parties.zip) = 5"""
     dataoutput = "COPY ({0}) TO STDOUT WITH CSV HEADER DELIMITER '|'".format(getquery)
     with open('oysterdatafile.csv', 'w') as f:
             cur.copy_expert(dataoutput, f)
             print('query complete')
 
-
-
 if __name__ == '__main__': main()
-
-
-'''
-#CODE TO ADD OTHER TABLES
-JOIN attorneys ON cases.case_id = attorneys.case_id
-JOIN events ON cases.case_id = events.case_id
-JOIN documents ON cases.case_id = documents.case_id
-JOIN judgements ON cases.case_id = judgements.case_id
-JOIN complaints ON cases.case_id = complaints.case_id
-'''

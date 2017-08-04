@@ -12,7 +12,7 @@ import pandas as pd
 import json
 import csv
 
-le= LabelEncoder()
+le = LabelEncoder()
 
 guilty = ['Guilty',  'Guilty - Prepaid',  'Nolo Contendere']
 notguilty = ['Abated by Death',  'Compromise',  'Court Dismissed Case',  'Dismissed',  'Judgment of Acquittal',  'Nolle Prosequi',  'Not Guilty']
@@ -104,15 +104,15 @@ def main():
             outdata = ','.join([str(item) for item in restdata])
             outputfile.write(outdata+'\n')
 
-    # seperate out cases that are still in process for possible prediction later ####
-    if (restdata[0] in ['in-process',  'disposition']):
-        inprocessdata = ','.join([str(item) for item in restdata])
-        inprocessfile.write(inprocessdata+'\n')
+        # seperate out cases that are still in process for possible prediction later ####
+        if (restdata[0] in ['in-process',  'disposition']):
+            inprocessdata = ','.join([str(item) for item in restdata])
+            inprocessfile.write(inprocessdata+'\n')
 
     outputfile.close()
     inprocessfile.close()
 
-    #### pre process simplified file to convert to a format friendly to decision tree classifier ####
+    # pre process simplified file to convert to a format friendly to decision tree classifier ####
     output_csv = pd.read_csv('outputfile.csv',  delimiter= ',')
     for col in output_csv.columns.values:
         if output_csv[col].dtype == 'object':
@@ -122,30 +122,31 @@ def main():
                     output.values[i] = str(output.values[i])
             le.fit(output.values)
             output_csv[col]= le.transform(output_csv[col])
-    #print (casetype(output))
-    #print (csv.head())
     data = output_csv.iloc[1: , 1:]
     target = output_csv.iloc[1:,  0]
     feature_names = output_csv.iloc[0,  1:]
     print ('class names are: ',  feature_names.index)
 
-    #   print('feature name ', data)
-
-    #Code to create decision tree
+    # Code to create decision tree
     X_train,  X_test,  y_train,  y_test = train_test_split(data,  target,  test_size = .33)
     tree = DecisionTreeClassifier(max_depth=4,  random_state=0) # pre pruned tree limiting depth
     tree.fit(X_train,  y_train)
     print('Accuracy on the training subset: {:.3f}'.format(tree.score(X_train,  y_train)))
     print('Accuracy on the test subset: {:.3f}'.format(tree.score(X_test,  y_test)))
-        #fix line (csv flie?)
     export_graphviz(tree,  out_file='dispositiontree.dot', class_names=['guilty',  'not guilty'],  feature_names=feature_names.index,   impurity=False,  filled=True)
     n_features = data.shape[1]
-    plt.barh(range(n_features),  tree.feature_importances_,  align='center')
+
+    fig, ax = plt.subplots()
+
+    ax.barh(range(n_features),  tree.feature_importances_,  align='center')
+    print(tree.feature_importances_)
+
     plt.yticks(np.arange(n_features),  feature_names.index)
-    plt.xlabel('Feature Importances')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    plt.xlabel('Importance')
     plt.ylabel('Feature')
     #plt.show()
-    plt.savefig('featureimp.png')
-
+    plt.savefig('featureimp.png', dpi=300, transparent = True)
 
 if __name__ == '__main__': main()
